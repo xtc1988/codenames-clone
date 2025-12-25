@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { getSessionId } from '@/services/roomService';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface WordPack {
   id: string;
@@ -121,11 +122,13 @@ export async function createWordPack(params: {
 }): Promise<WordPackDetail> {
   try {
     const sessionId = getSessionId();
+    const packId = uuidv4();
 
     // 1. パック作成
     const { data: pack, error: packError } = await supabase
       .from('word_packs')
       .insert({
+        id: packId,
         name: params.name,
         description: params.description,
         is_public: params.isPublic,
@@ -144,6 +147,7 @@ export async function createWordPack(params: {
     // 2. 単語作成
     if (params.words.length > 0) {
       const wordsToInsert = params.words.map((word) => ({
+        id: uuidv4(),
         word_pack_id: pack.id,
         word,
       }));
@@ -219,6 +223,7 @@ export async function addWords(packId: string, words: string[]): Promise<Word[]>
     if (words.length === 0) return [];
 
     const wordsToInsert = words.map((word) => ({
+      id: uuidv4(),
       word_pack_id: packId,
       word,
     }));

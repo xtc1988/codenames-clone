@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { Room, Player, CreateRoomResponse, RoomStatus } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
 // ルームコード生成（6桁の英数字）
 export function generateRoomCode(): string {
@@ -36,16 +37,20 @@ export async function createRoom(params: {
   const sessionId = getSessionId();
 
   try {
+    const roomId = uuidv4();
+
     // 1. ルーム作成
     const { data: room, error: roomError } = await supabase
       .from('rooms')
       .insert({
+        id: roomId,
         code,
         name: roomName,
         status: RoomStatus.WAITING,
         is_public: isPublic,
         word_pack_id: wordPackId,
         timer_seconds: timerSeconds,
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -56,9 +61,11 @@ export async function createRoom(params: {
     }
 
     // 2. ホストプレイヤー作成
+    const playerId = uuidv4();
     const { data: player, error: playerError } = await supabase
       .from('players')
       .insert({
+        id: playerId,
         room_id: room.id,
         nickname: hostNickname,
         team: 'SPECTATOR',
@@ -219,9 +226,11 @@ export async function joinRoom(params: {
     }
 
     // 新規参加
+    const playerId = uuidv4();
     const { data: player, error: playerError } = await supabase
       .from('players')
       .insert({
+        id: playerId,
         room_id: roomId,
         nickname,
         team: 'SPECTATOR',
