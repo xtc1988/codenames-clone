@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model WordPack {
+  id                String   @id @default(uuid())
+  name              String   @db.VarChar(100)
+  description       String?  @db.Text
+  isPublic          Boolean  @default(false) @map("is_public")
+  isDefault         Boolean  @default(false) @map("is_default")
+  language          String   @default("ja") @db.VarChar(10)
+  creatorSessionId  String?  @map("creator_session_id") @db.VarChar(255)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  words             Word[]
+  rooms             Room[]
+
+  @@map("word_packs")
+}
+
+model Word {
+  id          String   @id @default(uuid())
+  wordPackId  String   @map("word_pack_id")
+  word        String   @db.VarChar(100)
+
+  wordPack    WordPack @relation(fields: [wordPackId], references: [id], onDelete: Cascade)
+
+  @@map("words")
+  @@index([wordPackId])
+}
+
+model Room {
+  id            String       @id @default(uuid())
+  code          String       @unique @db.VarChar(6)
+  name          String       @db.VarChar(100)
+  status        RoomStatus   @default(WAITING)
+  isPublic      Boolean      @default(true) @map("is_public")
+  wordPackId    String       @map("word_pack_id")
+  currentTurn   Team?        @map("current_turn")
+  winner        Team?
+  timerSeconds  Int?         @map("timer_seconds")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  wordPack      WordPack     @relation(fields: [wordPackId], references: [id])
+  players       Player[]
+  cards         Card[]
+  hints         Hint[]
+
+  @@map("rooms")
+  @@index([code])
+  @@index([status])
+}
+
+model Player {
+  id             String         @id @default(uuid())
+  roomId         String         @map("room_id")
+  nickname       String         @db.VarChar(50)
+  team           Team           @default(SPECTATOR)
+  role           PlayerRole?
+  sessionId      String         @map("session_id") @db.VarChar(255)
+  isHost         Boolean        @default(false) @map("is_host")
+  spectatorView  SpectatorView  @default(OPERATIVE) @map("spectator_view")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  room           Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  hintsGiven     Hint[]
+  cardsRevealed  Card[]
+
+  @@map("players")
+  @@index([roomId])
+  @@index([sessionId])
+}
+
+model Card {
+  id          String      @id @default(uuid())
+  roomId      String      @map("room_id")
+  word        String      @db.VarChar(100)
+  position    Int
+  type        CardType
+  isRevealed  Boolean     @default(false) @map("is_revealed")
+  revealedBy  String?     @map("revealed_by")
+
+  room        Room        @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  revealer    Player?     @relation(fields: [revealedBy], references: [id])
+
+  @@map("cards")
+  @@index([roomId])
+}
+
+model Hint {
+  id        String   @id @default(uuid())
+  roomId    String   @map("room_id")
+  playerId  String   @map("player_id")
+  word      String   @db.VarChar(100)
+  count     Int
+  team      Team
+  createdAt DateTime @default(now()) @map("created_at")
+
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  player    Player   @relation(fields: [playerId], references: [id])
+
+  @@map("hints")
+  @@index([roomId])
+}
+
+enum RoomStatus {
+  WAITING
+  PLAYING
+  FINISHED
+}
+
+enum Team {
+  RED
+  BLUE
+  SPECTATOR
+}
+
+enum PlayerRole {
+  SPYMASTER
+  OPERATIVE
+}
+
+enum SpectatorView {
+  SPYMASTER
+  OPERATIVE
+}
+
+enum CardType {
+  RED
+  BLUE
+  NEUTRAL
+  ASSASSIN
+}
