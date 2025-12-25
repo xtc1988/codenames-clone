@@ -330,3 +330,49 @@ export async function getWordPacks() {
     return [];
   }
 }
+
+/**
+ * プレイヤー情報を更新
+ */
+export async function updatePlayer(params: {
+  playerId: string;
+  team?: 'RED' | 'BLUE' | 'SPECTATOR';
+  role?: 'SPYMASTER' | 'OPERATIVE' | null;
+  spectatorView?: 'SPYMASTER' | 'OPERATIVE';
+}): Promise<Player> {
+  const { playerId, team, role, spectatorView } = params;
+
+  try {
+    const updateData: any = {};
+    if (team !== undefined) updateData.team = team;
+    if (role !== undefined) updateData.role = role;
+    if (spectatorView !== undefined) updateData.spectator_view = spectatorView;
+
+    const { data, error } = await supabase
+      .from('players')
+      .update(updateData)
+      .eq('id', playerId)
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error('[roomService] プレイヤー更新エラー:', error);
+      throw new Error('プレイヤー情報の更新に失敗しました');
+    }
+
+    return {
+      id: data.id,
+      roomId: data.room_id,
+      nickname: data.nickname,
+      team: data.team,
+      role: data.role,
+      sessionId: data.session_id,
+      isHost: data.is_host,
+      spectatorView: data.spectator_view,
+      createdAt: data.created_at,
+    };
+  } catch (error) {
+    console.error('[roomService] エラー:', error);
+    throw error;
+  }
+}
