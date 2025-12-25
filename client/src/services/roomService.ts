@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { Room, Player, CreateRoomResponse, RoomStatus } from '@/types';
 
 // ルームコード生成（6桁の英数字）
-function generateRoomCode(): string {
+export function generateRoomCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = '';
   for (let i = 0; i < 6; i++) {
