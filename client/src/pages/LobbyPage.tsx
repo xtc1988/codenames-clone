@@ -4,6 +4,8 @@ import { getRoomByCode, updatePlayer } from '@/services/roomService';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { Team, PlayerRole } from '@/types';
+import { useRealtime } from '@/hooks/useRealtime';
+import { broadcastPlayerUpdated, broadcastGameStarted } from '@/services/realtimeService';
 
 export default function LobbyPage() {
   const { code } = useParams<{ code: string }>();
@@ -15,6 +17,21 @@ export default function LobbyPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Realtime統合
+  useRealtime({
+    roomCode: code || '',
+    onPlayerUpdated: (player) => {
+      console.log('[LobbyPage] プレイヤー更新受信:', player);
+      // プレイヤーリストを再読み込み
+      loadRoom();
+    },
+    onGameStarted: () => {
+      console.log('[LobbyPage] ゲーム開始受信');
+      // ゲーム画面に遷移
+      navigate(`/room/${code}/game`);
+    },
+  });
 
   // ルーム情報取得
   useEffect(() => {
@@ -54,7 +71,7 @@ export default function LobbyPage() {
 
   // チーム変更
   const handleTeamChange = async (team: Team) => {
-    if (!currentPlayer) return;
+    if (!currentPlayer || !code) return;
 
     try {
       const updated = await updatePlayer({
@@ -65,6 +82,9 @@ export default function LobbyPage() {
 
       setCurrentPlayer(updated);
       await loadRoom();
+
+      // Broadcast送信
+      await broadcastPlayerUpdated(code, updated);
     } catch (err) {
       console.error('[LobbyPage] チーム変更エラー:', err);
       setError('チーム変更に失敗しました');
@@ -73,7 +93,7 @@ export default function LobbyPage() {
 
   // 役割変更
   const handleRoleChange = async (role: PlayerRole | null) => {
-    if (!currentPlayer) return;
+    if (!currentPlayer || !code) return;
 
     try {
       const updated = await updatePlayer({
@@ -83,6 +103,9 @@ export default function LobbyPage() {
 
       setCurrentPlayer(updated);
       await loadRoom();
+
+      // Broadcast送信
+      await broadcastPlayerUpdated(code, updated);
     } catch (err) {
       console.error('[LobbyPage] 役割変更エラー:', err);
       setError('役割変更に失敗しました');
@@ -108,13 +131,24 @@ export default function LobbyPage() {
   };
 
   const handleStartGame = async () => {
-    if (!canStartGame()) {
+    if (!canStartGame() || !code) {
       setError('ゲームを開始できません。各チームに1人以上のプレイヤーとスパイマスターが必要です。');
       return;
     }
 
-    // TODO: gameService.startGame()を実装後に呼び出す
-    navigate(`/room/${code}/game`);
+    try {
+      // ゲーム開始通知をBroadcast
+      await broadcastGameStarted(code, {
+        roomCode: code,
+        timestamp: new Date().toISOString(),
+      });
+
+      // ゲーム画面に遷移
+      navigate(`/room/${code}/game`);
+    } catch (err) {
+      console.error('[LobbyPage] ゲーム開始エラー:', err);
+      setError('ゲームの開始に失敗しました');
+    }
   };
 
   // チーム別プレイヤー分類

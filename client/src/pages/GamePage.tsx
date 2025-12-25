@@ -8,6 +8,12 @@ import { useGameStore } from '@/stores/gameStore';
 import { Team, PlayerRole, RoomStatus } from '@/types';
 import { getTeamCounts } from '@/utils/gameLogic';
 import GameCard from '@/components/game/GameCard';
+import { useRealtime } from '@/hooks/useRealtime';
+import {
+  broadcastHintGiven,
+  broadcastCardRevealed,
+  broadcastTurnChanged,
+} from '@/services/realtimeService';
 
 export default function GamePage() {
   const { code } = useParams<{ code: string }>();
@@ -22,6 +28,37 @@ export default function GamePage() {
   const [hintWord, setHintWord] = useState('');
   const [hintCount, setHintCount] = useState(1);
   const [submittingHint, setSubmittingHint] = useState(false);
+
+  // Realtime統合
+  useRealtime({
+    roomCode: code || '',
+    onHintGiven: (hint) => {
+      console.log('[GamePage] ヒント受信:', hint);
+      setHints([hint, ...hints]);
+    },
+    onCardRevealed: (data) => {
+      console.log('[GamePage] カード公開受信:', data);
+      // カード更新
+      setCards(cards.map((c) => (c.id === data.card.id ? data.card : c)));
+      // ターン更新
+      if (data.nextTurn) {
+        setCurrentTurn(data.nextTurn);
+      }
+      // 勝者更新
+      if (data.winner) {
+        setWinner(data.winner);
+      }
+    },
+    onTurnChanged: (turn) => {
+      console.log('[GamePage] ターン変更受信:', turn);
+      setCurrentTurn(turn as Team);
+    },
+    onGameOver: (data) => {
+      console.log('[GamePage] ゲーム終了受信:', data);
+      setWinner(data.winner);
+      setCards(data.cards);
+    },
+  });
 
   // ゲームデータ読み込み
   useEffect(() => {
@@ -69,7 +106,7 @@ export default function GamePage() {
 
   // ヒント送信
   const handleSubmitHint = async () => {
-    if (!currentPlayer || !room || !hintWord.trim()) return;
+    if (!currentPlayer || !room || !hintWord.trim() || !code) return;
 
     setSubmittingHint(true);
     setError('');
@@ -86,6 +123,9 @@ export default function GamePage() {
       setHints([hint, ...hints]);
       setHintWord('');
       setHintCount(1);
+
+      // Broadcast送信
+      await broadcastHintGiven(code, hint);
     } catch (err) {
       console.error('[GamePage] ヒント送信エラー:', err);
       setError('ヒントの送信に失敗しました');
@@ -96,7 +136,7 @@ export default function GamePage() {
 
   // カード選択
   const handleCardSelect = async (card: typeof cards[0]) => {
-    if (!currentPlayer || !room || card.isRevealed) return;
+    if (!currentPlayer || !room || card.isRevealed || !code) return;
 
     try {
       const result = await revealCard({
@@ -121,6 +161,13 @@ export default function GamePage() {
       if (result.winner) {
         setWinner(result.winner);
       }
+
+      // Broadcast送信
+      await broadcastCardRevealed(code, {
+        card: result.card,
+        nextTurn: result.nextTurn,
+        winner: result.winner,
+      });
     } catch (err) {
       console.error('[GamePage] カード選択エラー:', err);
       setError('カードの選択に失敗しました');
@@ -129,11 +176,14 @@ export default function GamePage() {
 
   // ターンパス
   const handlePassTurn = async () => {
-    if (!room || !currentTurn) return;
+    if (!room || !currentTurn || !code) return;
 
     try {
       const nextTurn = await passTurn(room.id, currentTurn);
       setCurrentTurn(nextTurn);
+
+      // Broadcast送信
+      await broadcastTurnChanged(code, nextTurn);
     } catch (err) {
       console.error('[GamePage] ターンパスエラー:', err);
       setError('ターンのパスに失敗しました');
