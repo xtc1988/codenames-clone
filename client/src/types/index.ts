@@ -104,8 +104,19 @@ export interface CreateRoomResponse {
   player: Player;
 }
 
+export interface RoomListItem {
+  id: string;
+  code: string;
+  name: string;
+  status: RoomStatus;
+  isPublic: boolean;
+  playerCount: number;
+  maxPlayers: number;
+  createdAt: string;
+}
+
 export interface RoomListResponse {
-  rooms: Array<Room & { playerCount: number; maxPlayers: number }>;
+  rooms: RoomListItem[];
 }
 
 // Realtime Events

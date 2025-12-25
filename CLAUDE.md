@@ -38,25 +38,23 @@
 | TypeScript | 5.x | 型安全な開発 |
 | Vite | 5.x | ビルドツール |
 | Tailwind CSS | 3.x | スタイリング |
-| Socket.io-client | 4.x | リアルタイム通信 |
 | React Router | 6.x | ルーティング |
 | Zustand | 4.x | 状態管理 |
+| @supabase/supabase-js | 2.x | Supabaseクライアント |
 
-### 2.2 バックエンド
-| 技術 | バージョン | 用途 |
-|------|-----------|------|
-| Node.js | 20.x LTS | ランタイム |
-| Express | 4.x | HTTPサーバー |
-| TypeScript | 5.x | 型安全な開発 |
-| Socket.io | 4.x | WebSocket通信 |
-| Prisma | 5.x | ORM |
-| PostgreSQL | 15.x | データベース |
+### 2.2 バックエンド（Supabase）
+| 機能 | 用途 |
+|------|------|
+| PostgreSQL | データベース |
+| Realtime | リアルタイム同期（Broadcast/Presence） |
+| Edge Functions | 複雑なゲームロジック（必要に応じて） |
+| RLS (Row Level Security) | データアクセス制御 |
 
-### 2.3 インフラ（想定）
+### 2.3 インフラ
 | 技術 | 用途 |
 |------|------|
-| Docker | コンテナ化 |
-| Docker Compose | ローカル開発環境 |
+| Supabase | BaaS（ホスティング含む） |
+| Vercel / Netlify | フロントエンドホスティング |
 
 ---
 
@@ -122,7 +120,7 @@
 │ is_public    │       └──────────────┘
 │ is_default   │
 │ language     │
-│ creator_sid  │
+│ creator_id   │
 │ created_at   │
 └──────────────┘
         │
@@ -136,10 +134,11 @@
 │ name         │       │ nickname     │       │ player_id    │
 │ status       │       │ team         │       │ word         │
 │ is_public    │       │ role         │       │ count        │
-│ word_pack_id │       │ session_id   │       │ team         │
-│ current_turn │       │ is_host      │       │ created_at   │
-│ winner       │       │ created_at   │       └──────────────┘
-│ timer_sec    │       └──────────────┘
+│ word_pack_id │       │ is_host      │       │ team         │
+│ current_turn │       │ spectator_   │       │ created_at   │
+│ winner       │       │   view       │       └──────────────┘
+│ timer_sec    │       │ created_at   │
+│ guesses_left │       └──────────────┘
 │ created_at   │
 │ updated_at   │               │
 └──────────────┘               │
@@ -159,285 +158,896 @@
 └──────────────┘
 ```
 
-### 4.2 テーブル定義
+### 4.2 Supabase SQL スキーマ
 
-#### rooms
-| カラム名 | 型 | 制約 | 説明 |
-|---------|-----|------|------|
-| id | UUID | PK | ルームID |
-| code | VARCHAR(6) | UNIQUE, NOT NULL | 参加用コード |
-| name | VARCHAR(100) | NOT NULL | ルーム名 |
-| status | ENUM | NOT NULL, DEFAULT 'waiting' | waiting/playing/finished |
-| is_public | BOOLEAN | NOT NULL, DEFAULT true | 公開フラグ |
-| word_pack_id | UUID | FK | 使用する単語パック |
-| current_turn | ENUM | NULL | red/blue |
-| winner | ENUM | NULL | red/blue |
-| timer_seconds | INTEGER | NULL | ターン制限時間（秒） |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-| updated_at | TIMESTAMP | NOT NULL | 最終更新日時 |
+```sql
+-- ENUMの代わりにCHECK制約を使用（Supabase推奨）
 
-#### players
-| カラム名 | 型 | 制約 | 説明 |
-|---------|-----|------|------|
-| id | UUID | PK | プレイヤーID |
-| room_id | UUID | FK, NOT NULL | 所属ルーム |
-| nickname | VARCHAR(50) | NOT NULL | ニックネーム |
-| team | ENUM | NOT NULL, DEFAULT 'spectator' | red/blue/spectator |
-| role | ENUM | NULL | spymaster/operative |
-| session_id | VARCHAR(255) | NOT NULL | Socket.io セッションID |
-| is_host | BOOLEAN | NOT NULL, DEFAULT false | ホストフラグ |
-| spectator_view | ENUM | DEFAULT 'operative' | spymaster/operative（観戦時） |
-| created_at | TIMESTAMP | NOT NULL | 参加日時 |
+-- ルームテーブル
+CREATE TABLE rooms (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR(6) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'waiting' 
+    CHECK (status IN ('waiting', 'playing', 'finished')),
+  is_public BOOLEAN NOT NULL DEFAULT true,
+  word_pack_id UUID REFERENCES word_packs(id),
+  current_turn VARCHAR(10) CHECK (current_turn IN ('red', 'blue')),
+  winner VARCHAR(10) CHECK (winner IN ('red', 'blue')),
+  current_hint_word VARCHAR(100),
+  current_hint_count INTEGER,
+  guesses_left INTEGER,
+  timer_seconds INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
-#### cards
-| カラム名 | 型 | 制約 | 説明 |
-|---------|-----|------|------|
-| id | UUID | PK | カードID |
-| room_id | UUID | FK, NOT NULL | 所属ルーム |
-| word | VARCHAR(100) | NOT NULL | 単語 |
-| position | INTEGER | NOT NULL | 位置（0-24） |
-| type | ENUM | NOT NULL | red/blue/neutral/assassin |
-| is_revealed | BOOLEAN | NOT NULL, DEFAULT false | 公開済みフラグ |
-| revealed_by | UUID | FK, NULL | 公開したプレイヤー |
+-- プレイヤーテーブル
+CREATE TABLE players (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  nickname VARCHAR(50) NOT NULL,
+  team VARCHAR(20) NOT NULL DEFAULT 'spectator'
+    CHECK (team IN ('red', 'blue', 'spectator')),
+  role VARCHAR(20) CHECK (role IN ('spymaster', 'operative')),
+  is_host BOOLEAN NOT NULL DEFAULT false,
+  spectator_view VARCHAR(20) DEFAULT 'operative'
+    CHECK (spectator_view IN ('spymaster', 'operative')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
-#### hints
-| カラム名 | 型 | 制約 | 説明 |
-|---------|-----|------|------|
-| id | UUID | PK | ヒントID |
-| room_id | UUID | FK, NOT NULL | 所属ルーム |
-| player_id | UUID | FK, NOT NULL | ヒントを出したプレイヤー |
-| word | VARCHAR(100) | NOT NULL | ヒント単語 |
-| count | INTEGER | NOT NULL | 推測可能数 |
-| team | ENUM | NOT NULL | red/blue |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+-- カードテーブル
+CREATE TABLE cards (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  word VARCHAR(100) NOT NULL,
+  position INTEGER NOT NULL CHECK (position >= 0 AND position <= 24),
+  type VARCHAR(20) NOT NULL 
+    CHECK (type IN ('red', 'blue', 'neutral', 'assassin')),
+  is_revealed BOOLEAN NOT NULL DEFAULT false,
+  revealed_by UUID REFERENCES players(id),
+  UNIQUE(room_id, position)
+);
 
-#### word_packs
-| カラム名 | 型 | 制約 | 説明 |
-|---------|-----|------|------|
-| id | UUID | PK | パックID |
-| name | VARCHAR(100) | NOT NULL | パック名 |
-| description | TEXT | NULL | 説明 |
-| is_public | BOOLEAN | NOT NULL, DEFAULT false | 公開フラグ |
-| is_default | BOOLEAN | NOT NULL, DEFAULT false | システムデフォルト |
-| language | VARCHAR(10) | NOT NULL, DEFAULT 'ja' | 言語コード |
-| creator_session_id | VARCHAR(255) | NULL | 作成者セッションID |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+-- ヒント履歴テーブル
+CREATE TABLE hints (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  player_id UUID NOT NULL REFERENCES players(id),
+  word VARCHAR(100) NOT NULL,
+  count INTEGER NOT NULL,
+  team VARCHAR(10) NOT NULL CHECK (team IN ('red', 'blue')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
-#### words
-| カラム名 | 型 | 制約 | 説明 |
-|---------|-----|------|------|
-| id | UUID | PK | 単語ID |
-| word_pack_id | UUID | FK, NOT NULL | 所属パック |
-| word | VARCHAR(100) | NOT NULL | 単語 |
+-- 単語パックテーブル
+CREATE TABLE word_packs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  is_public BOOLEAN NOT NULL DEFAULT false,
+  is_default BOOLEAN NOT NULL DEFAULT false,
+  language VARCHAR(10) NOT NULL DEFAULT 'ja',
+  creator_id VARCHAR(255),  -- ゲストなのでセッションID等
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 単語テーブル
+CREATE TABLE words (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  word_pack_id UUID NOT NULL REFERENCES word_packs(id) ON DELETE CASCADE,
+  word VARCHAR(100) NOT NULL
+);
+
+-- チャットメッセージテーブル（任意機能）
+CREATE TABLE chat_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  player_id UUID NOT NULL REFERENCES players(id),
+  message TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- インデックス
+CREATE INDEX idx_rooms_code ON rooms(code);
+CREATE INDEX idx_rooms_is_public ON rooms(is_public);
+CREATE INDEX idx_rooms_updated_at ON rooms(updated_at);
+CREATE INDEX idx_players_room_id ON players(room_id);
+CREATE INDEX idx_cards_room_id ON cards(room_id);
+CREATE INDEX idx_words_word_pack_id ON words(word_pack_id);
+CREATE INDEX idx_word_packs_is_public ON word_packs(is_public);
+
+-- updated_at自動更新トリガー
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER rooms_updated_at
+  BEFORE UPDATE ON rooms
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();
+```
+
+### 4.3 Row Level Security (RLS)
+
+```sql
+-- RLSを有効化
+ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hints ENABLE ROW LEVEL SECURITY;
+ALTER TABLE word_packs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE words ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+
+-- ルーム: 誰でも参照可能、作成可能
+CREATE POLICY "rooms_select" ON rooms FOR SELECT USING (true);
+CREATE POLICY "rooms_insert" ON rooms FOR INSERT WITH CHECK (true);
+CREATE POLICY "rooms_update" ON rooms FOR UPDATE USING (true);
+CREATE POLICY "rooms_delete" ON rooms FOR DELETE USING (true);
+
+-- プレイヤー: 誰でも操作可能
+CREATE POLICY "players_all" ON players FOR ALL USING (true);
+
+-- カード: 誰でも参照可能、ゲーム中の操作はアプリ側で制御
+CREATE POLICY "cards_all" ON cards FOR ALL USING (true);
+
+-- ヒント: 誰でも操作可能
+CREATE POLICY "hints_all" ON hints FOR ALL USING (true);
+
+-- 単語パック: 公開パックは誰でも参照可能
+CREATE POLICY "word_packs_select" ON word_packs FOR SELECT USING (true);
+CREATE POLICY "word_packs_insert" ON word_packs FOR INSERT WITH CHECK (true);
+CREATE POLICY "word_packs_update" ON word_packs FOR UPDATE USING (true);
+CREATE POLICY "word_packs_delete" ON word_packs FOR DELETE USING (true);
+
+-- 単語: パックに紐づいて操作
+CREATE POLICY "words_all" ON words FOR ALL USING (true);
+
+-- チャット: ルームのメンバーのみ
+CREATE POLICY "chat_all" ON chat_messages FOR ALL USING (true);
+```
+
+### 4.4 クリーンアップ用SQL関数
+
+```sql
+-- 12時間以上非アクティブなルームを削除
+CREATE OR REPLACE FUNCTION cleanup_inactive_rooms()
+RETURNS INTEGER AS $$
+DECLARE
+  deleted_count INTEGER;
+BEGIN
+  DELETE FROM rooms 
+  WHERE updated_at < NOW() - INTERVAL '12 hours';
+  
+  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Supabase Cron (pg_cron) で定期実行
+-- SELECT cron.schedule('cleanup-rooms', '0 * * * *', 'SELECT cleanup_inactive_rooms()');
+```
 
 ---
 
-## 5. API設計
+## 5. Supabase Realtime 設計
 
-### 5.1 REST API
+### 5.1 チャンネル構成
 
-#### ルーム
+| チャンネル名 | 用途 | タイプ |
+|-------------|------|--------|
+| `room:{roomId}` | ルーム内のゲームイベント | Broadcast |
+| `room:{roomId}:presence` | プレイヤーのオンライン状態 | Presence |
 
-| メソッド | エンドポイント | 説明 |
-|----------|----------------|------|
-| POST | /api/rooms | ルーム作成 |
-| GET | /api/rooms | 公開ルーム一覧取得 |
-| GET | /api/rooms/:code | ルーム情報取得 |
-| DELETE | /api/rooms/:id | ルーム削除（ホストのみ） |
+### 5.2 Broadcast イベント
 
-#### 単語パック
+#### クライアント → サーバー（他クライアント）
 
-| メソッド | エンドポイント | 説明 |
-|----------|----------------|------|
-| GET | /api/word-packs | 公開パック一覧取得 |
-| GET | /api/word-packs/:id | パック詳細取得 |
-| POST | /api/word-packs | パック作成 |
-| PUT | /api/word-packs/:id | パック更新 |
-| DELETE | /api/word-packs/:id | パック削除 |
+| イベント名 | ペイロード | 説明 |
+|-----------|-----------|------|
+| player_joined | `{ player }` | プレイヤー参加 |
+| player_left | `{ playerId }` | プレイヤー退出 |
+| team_changed | `{ playerId, team, role }` | チーム/役割変更 |
+| game_started | `{ cards, currentTurn }` | ゲーム開始 |
+| hint_given | `{ hint }` | ヒント送信 |
+| card_selected | `{ position, result }` | カード選択結果 |
+| turn_ended | `{ nextTurn }` | ターン終了 |
+| game_over | `{ winner }` | ゲーム終了 |
+| chat_message | `{ playerId, nickname, message }` | チャット |
 
-### 5.2 API詳細
+### 5.3 Presence
 
-#### POST /api/rooms
-ルームを作成する。
-
-**リクエスト:**
-```json
-{
-  "name": "友達とコードネーム",
-  "isPublic": true,
-  "wordPackId": "uuid-word-pack-id",
-  "timerSeconds": null,
-  "hostNickname": "太郎"
-}
+```typescript
+// プレイヤーのオンライン状態を追跡
+interface PresenceState {
+  odenames-clone/
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── tailwind.config.js
+├── index.html
+├── .env.local                    # Supabase接続情報
+├── .env.example
+│
+├── public/
+│   └── favicon.ico
+│
+├── src/
+│   ├── main.tsx
+│   ├── App.tsx
+│   ├── index.css
+│   │
+│   ├── components/
+│   │   ├── ui/                   # 共通UIコンポーネント
+│   │   │   ├── Button.tsx
+│   │   │   ├── Input.tsx
+│   │   │   ├── Card.tsx
+│   │   │   └── Modal.tsx
+│   │   │
+│   │   ├── game/                 # ゲーム関連コンポーネント
+│   │   │   ├── Board.tsx         # 5x5ボード
+│   │   │   ├── GameCard.tsx      # 単語カード
+│   │   │   ├── HintInput.tsx     # ヒント入力
+│   │   │   ├── HintDisplay.tsx   # ヒント表示
+│   │   │   ├── TeamScore.tsx     # チームスコア
+│   │   │   └── GameResult.tsx    # 結果表示
+│   │   │
+│   │   ├── room/                 # ルーム関連コンポーネント
+│   │   │   ├── PlayerList.tsx    # プレイヤー一覧
+│   │   │   ├── TeamPanel.tsx     # チーム選択パネル
+│   │   │   ├── RoomSettings.tsx  # ルーム設定
+│   │   │   └── Chat.tsx          # チャット
+│   │   │
+│   │   └── layout/               # レイアウト
+│   │       ├── Header.tsx
+│   │       └── Layout.tsx
+│   │
+│   ├── pages/
+│   │   ├── TopPage.tsx
+│   │   ├── CreateRoomPage.tsx
+│   │   ├── JoinRoomPage.tsx
+│   │   ├── RoomListPage.tsx
+│   │   ├── LobbyPage.tsx
+│   │   ├── GamePage.tsx
+│   │   ├── WordPackListPage.tsx
+│   │   ├── WordPackCreatePage.tsx
+│   │   └── WordPackEditPage.tsx
+│   │
+│   ├── hooks/
+│   │   ├── useSupabase.ts        # Supabaseクライアント
+│   │   ├── useRoom.ts            # ルーム操作
+│   │   ├── useGame.ts            # ゲームロジック
+│   │   ├── useRealtime.ts        # Realtime購読
+│   │   └── usePresence.ts        # Presence管理
+│   │
+│   ├── stores/                   # Zustand
+│   │   ├── playerStore.ts        # 自分のプレイヤー情報
+│   │   ├── roomStore.ts          # ルーム状態
+│   │   └── gameStore.ts          # ゲーム状態
+│   │
+│   ├── lib/
+│   │   ├── supabase.ts           # Supabaseクライアント初期化
+│   │   └── constants.ts          # 定数
+│   │
+│   ├── services/
+│   │   ├── roomService.ts        # ルームCRUD
+│   │   ├── gameService.ts        # ゲームロジック
+│   │   ├── wordPackService.ts    # 単語パックCRUD
+│   │   └── realtimeService.ts    # Realtime処理
+│   │
+│   ├── types/
+│   │   ├── database.ts           # Supabase生成型
+│   │   └── index.ts              # アプリ固有型
+│   │
+│   └── utils/
+│       ├── codeGenerator.ts      # ルームコード生成
+│       ├── cardGenerator.ts      # カード配置ロジック
+│       └── helpers.ts
+│
+└── supabase/
+    ├── config.toml               # Supabase設定
+    ├── seed.sql                  # 初期データ（単語1000語）
+    └── migrations/
+        └── 20250101000000_init.sql
 ```
 
-**レスポンス:**
-```json
-{
-  "id": "uuid-room-id",
-  "code": "ABC123",
-  "name": "友達とコードネーム",
-  "status": "waiting",
-  "isPublic": true,
-  "wordPackId": "uuid-word-pack-id",
-  "timerSeconds": null,
-  "createdAt": "2025-01-01T00:00:00Z",
-  "host": {
-    "id": "uuid-player-id",
-    "nickname": "太郎",
-    "sessionId": "socket-session-id"
+---
+
+## 7. 型定義
+
+### 7.1 データベース型（Supabase生成）
+
+```typescript
+// types/database.ts
+// `supabase gen types typescript` で生成
+
+export interface Database {
+  public: {
+    Tables: {
+      rooms: {
+        Row: {
+          id: string
+          code: string
+          name: string
+          status: 'waiting' | 'playing' | 'finished'
+          is_public: boolean
+          word_pack_id: string | null
+          current_turn: 'red' | 'blue' | null
+          winner: 'red' | 'blue' | null
+          current_hint_word: string | null
+          current_hint_count: number | null
+          guesses_left: number | null
+          timer_seconds: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: { ... }
+        Update: { ... }
+      }
+      players: { ... }
+      cards: { ... }
+      hints: { ... }
+      word_packs: { ... }
+      words: { ... }
+      chat_messages: { ... }
+    }
   }
 }
 ```
 
-#### GET /api/rooms
-公開ルーム一覧を取得する。
+### 7.2 アプリケーション型
 
-**レスポンス:**
-```json
-{
-  "rooms": [
-    {
-      "id": "uuid-room-id",
-      "code": "ABC123",
-      "name": "友達とコードネーム",
-      "status": "waiting",
-      "playerCount": 4,
-      "maxPlayers": 12,
-      "createdAt": "2025-01-01T00:00:00Z"
-    }
-  ]
+```typescript
+// types/index.ts
+
+export type Team = 'red' | 'blue' | 'spectator'
+export type Role = 'spymaster' | 'operative'
+export type CardType = 'red' | 'blue' | 'neutral' | 'assassin'
+export type RoomStatus = 'waiting' | 'playing' | 'finished'
+export type SpectatorView = 'spymaster' | 'operative'
+
+export interface Player {
+  id: string
+  roomId: string
+  nickname: string
+  team: Team
+  role: Role | null
+  isHost: boolean
+  spectatorView: SpectatorView
+  isOnline: boolean  // Presenceから
 }
+
+export interface Card {
+  id: string
+  word: string
+  position: number
+  type: CardType
+  isRevealed: boolean
+  revealedBy: string | null
+}
+
+export interface Hint {
+  id: string
+  playerId: string
+  word: string
+  count: number
+  team: 'red' | 'blue'
+  createdAt: string
+}
+
+export interface Room {
+  id: string
+  code: string
+  name: string
+  status: RoomStatus
+  isPublic: boolean
+  wordPackId: string | null
+  currentTurn: 'red' | 'blue' | null
+  winner: 'red' | 'blue' | null
+  currentHint: { word: string; count: number } | null
+  guessesLeft: number | null
+  timerSeconds: number | null
+  players: Player[]
+  cards: Card[]
+  hints: Hint[]
+}
+
+export interface WordPack {
+  id: string
+  name: string
+  description: string | null
+  isPublic: boolean
+  isDefault: boolean
+  language: string
+  wordCount: number
+}
+
+// Realtimeイベント
+export type RealtimeEvent = 
+  | { type: 'player_joined'; player: Player }
+  | { type: 'player_left'; playerId: string }
+  | { type: 'team_changed'; playerId: string; team: Team; role: Role | null }
+  | { type: 'game_started'; cards: Card[]; currentTurn: 'red' | 'blue' }
+  | { type: 'hint_given'; hint: Hint }
+  | { type: 'card_selected'; position: number; card: Card; nextTurn?: 'red' | 'blue'; gameOver?: boolean; winner?: 'red' | 'blue' }
+  | { type: 'turn_ended'; nextTurn: 'red' | 'blue' }
+  | { type: 'game_over'; winner: 'red' | 'blue' }
+  | { type: 'chat_message'; playerId: string; nickname: string; message: string; timestamp: string }
 ```
 
-#### GET /api/rooms/:code
-ルームコードでルーム情報を取得する。
+---
 
-**レスポンス:**
-```json
-{
-  "id": "uuid-room-id",
-  "code": "ABC123",
-  "name": "友達とコードネーム",
-  "status": "playing",
-  "isPublic": true,
-  "wordPack": {
-    "id": "uuid-word-pack-id",
-    "name": "デフォルト日本語"
+## 8. 主要サービス実装
+
+### 8.1 Supabaseクライアント初期化
+
+```typescript
+// lib/supabase.ts
+import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+```
+
+### 8.2 ルームサービス
+
+```typescript
+// services/roomService.ts
+import { supabase } from '@/lib/supabase'
+import { generateRoomCode } from '@/utils/codeGenerator'
+
+export const roomService = {
+  // ルーム作成
+  async createRoom(params: {
+    name: string
+    isPublic: boolean
+    wordPackId: string
+    hostNickname: string
+    timerSeconds?: number
+  }) {
+    const code = generateRoomCode()
+    
+    // ルーム作成
+    const { data: room, error: roomError } = await supabase
+      .from('rooms')
+      .insert({
+        code,
+        name: params.name,
+        is_public: params.isPublic,
+        word_pack_id: params.wordPackId,
+        timer_seconds: params.timerSeconds ?? null,
+      })
+      .select()
+      .single()
+    
+    if (roomError) throw roomError
+    
+    // ホストプレイヤー作成
+    const { data: player, error: playerError } = await supabase
+      .from('players')
+      .insert({
+        room_id: room.id,
+        nickname: params.hostNickname,
+        is_host: true,
+      })
+      .select()
+      .single()
+    
+    if (playerError) throw playerError
+    
+    return { room, player }
   },
-  "currentTurn": "red",
-  "players": [
-    {
-      "id": "uuid-player-id",
-      "nickname": "太郎",
-      "team": "red",
-      "role": "spymaster",
-      "isHost": true
+
+  // 公開ルーム一覧
+  async getPublicRooms() {
+    const { data, error } = await supabase
+      .from('rooms')
+      .select(`
+        *,
+        players(count)
+      `)
+      .eq('is_public', true)
+      .eq('status', 'waiting')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data
+  },
+
+  // ルームコードで取得
+  async getRoomByCode(code: string) {
+    const { data, error } = await supabase
+      .from('rooms')
+      .select(`
+        *,
+        players(*),
+        cards(*),
+        hints(*)
+      `)
+      .eq('code', code.toUpperCase())
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  // ルーム参加
+  async joinRoom(roomId: string, nickname: string) {
+    // 人数チェック
+    const { count } = await supabase
+      .from('players')
+      .select('*', { count: 'exact', head: true })
+      .eq('room_id', roomId)
+    
+    if (count && count >= 12) {
+      throw new Error('ルームが満員です')
     }
-  ],
-  "teamCounts": {
-    "red": { "total": 9, "revealed": 3 },
-    "blue": { "total": 8, "revealed": 2 }
-  }
+    
+    const { data, error } = await supabase
+      .from('players')
+      .insert({
+        room_id: roomId,
+        nickname,
+      })
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  // チーム/役割変更
+  async updatePlayer(playerId: string, updates: {
+    team?: 'red' | 'blue' | 'spectator'
+    role?: 'spymaster' | 'operative' | null
+    spectatorView?: 'spymaster' | 'operative'
+  }) {
+    const { data, error } = await supabase
+      .from('players')
+      .update(updates)
+      .eq('id', playerId)
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  // プレイヤー退出
+  async leaveRoom(playerId: string) {
+    const { error } = await supabase
+      .from('players')
+      .delete()
+      .eq('id', playerId)
+    
+    if (error) throw error
+  },
 }
 ```
 
-#### POST /api/word-packs
-単語パックを作成する。
+### 8.3 ゲームサービス
 
-**リクエスト:**
-```json
-{
-  "name": "アニメ用語パック",
-  "description": "アニメに関する単語を集めました",
-  "isPublic": true,
-  "language": "ja",
-  "words": ["主人公", "ヒロイン", "必殺技", "..."]
+```typescript
+// services/gameService.ts
+import { supabase } from '@/lib/supabase'
+import { generateCards } from '@/utils/cardGenerator'
+
+export const gameService = {
+  // ゲーム開始
+  async startGame(roomId: string, wordPackId: string) {
+    // 単語取得
+    const { data: words } = await supabase
+      .from('words')
+      .select('word')
+      .eq('word_pack_id', wordPackId)
+    
+    if (!words || words.length < 25) {
+      throw new Error('単語が不足しています')
+    }
+    
+    // カード生成
+    const cards = generateCards(words.map(w => w.word))
+    
+    // カード挿入
+    const { error: cardsError } = await supabase
+      .from('cards')
+      .insert(cards.map((card, index) => ({
+        room_id: roomId,
+        word: card.word,
+        position: index,
+        type: card.type,
+      })))
+    
+    if (cardsError) throw cardsError
+    
+    // ルーム状態更新
+    const { error: roomError } = await supabase
+      .from('rooms')
+      .update({
+        status: 'playing',
+        current_turn: 'red',  // 赤先攻
+      })
+      .eq('id', roomId)
+    
+    if (roomError) throw roomError
+    
+    return cards
+  },
+
+  // ヒント送信
+  async giveHint(roomId: string, playerId: string, word: string, count: number, team: 'red' | 'blue') {
+    // ヒント記録
+    const { error: hintError } = await supabase
+      .from('hints')
+      .insert({
+        room_id: roomId,
+        player_id: playerId,
+        word,
+        count,
+        team,
+      })
+    
+    if (hintError) throw hintError
+    
+    // ルーム更新（現在のヒント、残り推測回数）
+    const { error: roomError } = await supabase
+      .from('rooms')
+      .update({
+        current_hint_word: word,
+        current_hint_count: count,
+        guesses_left: count + 1,  // ヒント数 + 1回
+      })
+      .eq('id', roomId)
+    
+    if (roomError) throw roomError
+  },
+
+  // カード選択
+  async selectCard(roomId: string, playerId: string, position: number) {
+    // カード取得
+    const { data: card } = await supabase
+      .from('cards')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('position', position)
+      .single()
+    
+    if (!card || card.is_revealed) {
+      throw new Error('無効なカードです')
+    }
+    
+    // カード公開
+    await supabase
+      .from('cards')
+      .update({
+        is_revealed: true,
+        revealed_by: playerId,
+      })
+      .eq('id', card.id)
+    
+    // ルーム状態取得
+    const { data: room } = await supabase
+      .from('rooms')
+      .select('*, cards(*)')
+      .eq('id', roomId)
+      .single()
+    
+    // 勝敗判定
+    const result = this.checkGameResult(room, card)
+    
+    if (result.gameOver) {
+      await supabase
+        .from('rooms')
+        .update({
+          status: 'finished',
+          winner: result.winner,
+        })
+        .eq('id', roomId)
+    } else if (result.turnEnded) {
+      const nextTurn = room.current_turn === 'red' ? 'blue' : 'red'
+      await supabase
+        .from('rooms')
+        .update({
+          current_turn: nextTurn,
+          current_hint_word: null,
+          current_hint_count: null,
+          guesses_left: null,
+        })
+        .eq('id', roomId)
+    } else {
+      // 推測継続
+      await supabase
+        .from('rooms')
+        .update({
+          guesses_left: (room.guesses_left ?? 1) - 1,
+        })
+        .eq('id', roomId)
+    }
+    
+    return { card, ...result }
+  },
+
+  // ターン終了（パス）
+  async endTurn(roomId: string) {
+    const { data: room } = await supabase
+      .from('rooms')
+      .select('current_turn')
+      .eq('id', roomId)
+      .single()
+    
+    const nextTurn = room?.current_turn === 'red' ? 'blue' : 'red'
+    
+    await supabase
+      .from('rooms')
+      .update({
+        current_turn: nextTurn,
+        current_hint_word: null,
+        current_hint_count: null,
+        guesses_left: null,
+      })
+      .eq('id', roomId)
+    
+    return nextTurn
+  },
+
+  // 勝敗判定ロジック
+  checkGameResult(room: any, selectedCard: any) {
+    const cards = room.cards
+    const currentTurn = room.current_turn
+    
+    // 暗殺者 → 即敗北
+    if (selectedCard.type === 'assassin') {
+      return {
+        gameOver: true,
+        winner: currentTurn === 'red' ? 'blue' : 'red',
+        turnEnded: true,
+      }
+    }
+    
+    // 全カード公開チェック
+    const redRevealed = cards.filter((c: any) => c.type === 'red' && c.is_revealed).length
+    const blueRevealed = cards.filter((c: any) => c.type === 'blue' && c.is_revealed).length
+    
+    // 自チーム全公開 → 勝利（選択したカード含む）
+    const newRedRevealed = selectedCard.type === 'red' ? redRevealed + 1 : redRevealed
+    const newBlueRevealed = selectedCard.type === 'blue' ? blueRevealed + 1 : blueRevealed
+    
+    if (newRedRevealed === 9) {
+      return { gameOver: true, winner: 'red' as const, turnEnded: true }
+    }
+    if (newBlueRevealed === 8) {
+      return { gameOver: true, winner: 'blue' as const, turnEnded: true }
+    }
+    
+    // 相手チームまたは中立 → ターン終了
+    if (selectedCard.type !== currentTurn) {
+      return { gameOver: false, turnEnded: true }
+    }
+    
+    // 自チーム → 推測継続（残り回数チェック）
+    if ((room.guesses_left ?? 1) <= 1) {
+      return { gameOver: false, turnEnded: true }
+    }
+    
+    return { gameOver: false, turnEnded: false }
+  },
+
+  // 再戦
+  async restartGame(roomId: string, wordPackId: string) {
+    // 古いカード削除
+    await supabase.from('cards').delete().eq('room_id', roomId)
+    await supabase.from('hints').delete().eq('room_id', roomId)
+    
+    // ルームリセット
+    await supabase
+      .from('rooms')
+      .update({
+        status: 'waiting',
+        current_turn: null,
+        winner: null,
+        current_hint_word: null,
+        current_hint_count: null,
+        guesses_left: null,
+      })
+      .eq('id', roomId)
+  },
 }
 ```
 
-**レスポンス:**
-```json
-{
-  "id": "uuid-word-pack-id",
-  "name": "アニメ用語パック",
-  "description": "アニメに関する単語を集めました",
-  "isPublic": true,
-  "language": "ja",
-  "wordCount": 150,
-  "createdAt": "2025-01-01T00:00:00Z"
+### 8.4 Realtimeサービス
+
+```typescript
+// services/realtimeService.ts
+import { supabase } from '@/lib/supabase'
+import type { RealtimeChannel } from '@supabase/supabase-js'
+
+export const realtimeService = {
+  channel: null as RealtimeChannel | null,
+
+  // ルームに接続
+  joinRoom(roomId: string, player: { id: string; nickname: string }) {
+    this.channel = supabase.channel(`room:${roomId}`, {
+      config: {
+        presence: { key: player.id },
+      },
+    })
+
+    // Presence設定
+    this.channel.on('presence', { event: 'sync' }, () => {
+      const state = this.channel?.presenceState()
+      console.log('Presence sync:', state)
+    })
+
+    this.channel.on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      console.log('Player joined:', key, newPresences)
+    })
+
+    this.channel.on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+      console.log('Player left:', key, leftPresences)
+    })
+
+    // 購読開始
+    this.channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await this.channel?.track({
+          id: player.id,
+          nickname: player.nickname,
+          online_at: new Date().toISOString(),
+        })
+      }
+    })
+
+    return this.channel
+  },
+
+  // イベント送信
+  broadcast(event: string, payload: any) {
+    this.channel?.send({
+      type: 'broadcast',
+      event,
+      payload,
+    })
+  },
+
+  // イベント購読
+  onBroadcast(event: string, callback: (payload: any) => void) {
+    this.channel?.on('broadcast', { event }, ({ payload }) => {
+      callback(payload)
+    })
+  },
+
+  // DB変更購読
+  onTableChange(table: string, filter: string, callback: (payload: any) => void) {
+    this.channel?.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table, filter },
+      callback
+    )
+  },
+
+  // 切断
+  leave() {
+    if (this.channel) {
+      supabase.removeChannel(this.channel)
+      this.channel = null
+    }
+  },
 }
 ```
 
 ---
 
-## 6. WebSocket イベント設計
+## 9. 画面設計
 
-### 6.1 クライアント → サーバー
-
-| イベント名 | ペイロード | 説明 |
-|-----------|-----------|------|
-| join_room | `{ roomCode, nickname }` | ルームに参加 |
-| leave_room | `{}` | ルームから退出 |
-| select_team | `{ team: 'red' \| 'blue' \| 'spectator' }` | チーム選択 |
-| select_role | `{ role: 'spymaster' \| 'operative' }` | 役割選択 |
-| set_spectator_view | `{ view: 'spymaster' \| 'operative' }` | 観戦ビュー設定 |
-| start_game | `{}` | ゲーム開始（ホストのみ） |
-| give_hint | `{ word, count }` | ヒントを出す |
-| select_card | `{ position }` | カードを選択 |
-| end_turn | `{}` | ターン終了（パス） |
-| restart_game | `{}` | 再戦（ホストのみ） |
-| send_chat | `{ message }` | チャットメッセージ送信 |
-
-### 6.2 サーバー → クライアント
-
-| イベント名 | ペイロード | 説明 |
-|-----------|-----------|------|
-| room_state | `{ room, players, cards, hints }` | ルーム全体の状態 |
-| player_joined | `{ player }` | プレイヤー参加通知 |
-| player_left | `{ playerId }` | プレイヤー退出通知 |
-| player_updated | `{ player }` | プレイヤー情報更新 |
-| game_started | `{ cards, currentTurn }` | ゲーム開始通知 |
-| hint_given | `{ hint }` | ヒント通知 |
-| card_revealed | `{ card, nextTurn, gameOver, winner }` | カード公開結果 |
-| turn_changed | `{ currentTurn }` | ターン変更通知 |
-| game_over | `{ winner, cards }` | ゲーム終了通知 |
-| chat_message | `{ playerId, nickname, message, timestamp }` | チャット受信 |
-| error | `{ code, message }` | エラー通知 |
-
-### 6.3 イベントフロー
-
-```
-【ルーム参加フロー】
-Client                          Server
-   |-- join_room --------------->|
-   |<-- room_state --------------|
-   |<-- player_joined (broadcast)|
-
-【ゲーム開始フロー】
-Host                            Server                          Others
-  |-- start_game -------------->|                                  |
-  |<-- game_started ------------|-- game_started (broadcast) ----->|
-
-【ターンフロー（スパイマスター）】
-Spymaster                       Server                          Operatives
-     |-- give_hint ------------>|                                  |
-     |<-- hint_given -----------|-- hint_given (broadcast) ------->|
-
-【ターンフロー（オペレーティブ）】
-Operative                       Server                          All
-     |-- select_card ---------->|                                  |
-     |<-- card_revealed --------|-- card_revealed (broadcast) ---->|
-     |                          |                                  |
-     |-- end_turn ------------->| (or continue selecting)          |
-     |<-- turn_changed ---------|-- turn_changed (broadcast) ----->|
-```
-
----
-
-## 7. 画面設計
-
-### 7.1 画面一覧
+### 9.1 画面一覧
 
 | 画面ID | 画面名 | パス | 説明 |
 |--------|--------|------|------|
@@ -451,7 +1061,7 @@ Operative                       Server                          All
 | S-08 | 単語パック作成 | /word-packs/create | 新規パック作成 |
 | S-09 | 単語パック編集 | /word-packs/:id/edit | パック編集 |
 
-### 7.2 画面詳細
+### 9.2 画面詳細
 
 #### S-01: トップ画面
 ```
@@ -488,22 +1098,22 @@ Operative                       Server                          All
 │  │      🔴 赤チーム     │       │      🔵 青チーム     │          │
 │  ├─────────────────────┤       ├─────────────────────┤          │
 │  │ 👑 スパイマスター    │       │ 👑 スパイマスター    │          │
-│  │   太郎              │       │   (空き)            │          │
+│  │   太郎 ●            │       │   (空き)            │          │
 │  │ [選択]              │       │   [選択]            │          │
 │  ├─────────────────────┤       ├─────────────────────┤          │
 │  │ 🔍 オペレーティブ    │       │ 🔍 オペレーティブ    │          │
-│  │   花子              │       │   次郎              │          │
+│  │   花子 ●            │       │   次郎 ●            │          │
 │  │   [選択]            │       │   [選択]            │          │
 │  └─────────────────────┘       └─────────────────────┘          │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────┐        │
-│  │ 👁 観戦者: 山田                                      │        │
+│  │ 👁 観戦者: 山田 ●                                    │        │
 │  │ ビュー: [スパイマスター ▼]                           │        │
 │  │ [観戦者になる]                                       │        │
 │  └─────────────────────────────────────────────────────┘        │
 │                                                                 │
+│  ● = オンライン                                                 │
 │  単語パック: デフォルト日本語                                    │
-│  タイマー: なし                                                  │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────┐        │
 │  │              🎮 ゲームを開始する                     │        │
@@ -523,36 +1133,29 @@ Operative                       Server                          All
 │  ┌─────────┬─────────┬─────────┬─────────┬─────────┐           │
 │  │         │  🔴     │         │         │  🔵     │           │
 │  │  りんご  │  東京   │  電車   │  猫     │  海    │           │
-│  │         │(revealed)│        │         │(revealed)│          │
+│  │         │(公開済) │         │         │(公開済) │           │
 │  ├─────────┼─────────┼─────────┼─────────┼─────────┤           │
-│  │         │         │  ⬛     │  🔴     │         │           │
+│  │         │         │         │  🔴     │         │           │
 │  │  山     │  本     │  月    │  花     │  空     │           │
-│  │         │         │(assassin)│(revealed)│        │           │
+│  │         │         │         │(公開済) │         │           │
 │  ├─────────┼─────────┼─────────┼─────────┼─────────┤           │
 │  │  🔵     │         │         │         │  ⬜     │           │
 │  │  水     │  火     │  木     │  金     │  土     │           │
-│  │(revealed)│        │         │         │(neutral)│           │
+│  │(公開済) │         │         │         │(中立)   │           │
 │  ├─────────┼─────────┼─────────┼─────────┼─────────┤           │
 │  │         │  🔴     │         │         │         │           │
 │  │  雨     │  雪     │  風     │  雲     │  虹     │           │
-│  │         │(revealed)│        │         │         │           │
+│  │         │(公開済) │         │         │         │           │
 │  ├─────────┼─────────┼─────────┼─────────┼─────────┤           │
 │  │         │         │  🔵     │         │         │           │
 │  │  星     │  月     │  太陽   │  地球   │  宇宙   │           │
-│  │         │         │(revealed)│        │         │           │
+│  │         │         │(公開済) │         │         │           │
 │  └─────────┴─────────┴─────────┴─────────┴─────────┘           │
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────┐       │
 │  │              ターン終了（パス）                       │       │
 │  └──────────────────────────────────────────────────────┘       │
 │                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  チャット                                                       │
-│  ┌──────────────────────────────────────────────────────┐       │
-│  │ 太郎: いいヒントだ！                                  │       │
-│  │ 花子: 猫じゃない？                                    │       │
-│  └──────────────────────────────────────────────────────┘       │
-│  [メッセージを入力...                            ] [送信]       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -565,15 +1168,15 @@ Operative                       Server                          All
 │  ┌─────────┬─────────┬─────────┬─────────┬─────────┐           │
 │  │  ⬜     │  🔴     │  🔴     │  🔵     │  🔵     │           │
 │  │  りんご  │  東京   │  電車   │  猫     │  海    │           │
-│  │ neutral │ revealed│  red    │  blue   │ revealed│           │
+│  │ neutral │ 公開済  │  red    │  blue   │ 公開済  │           │
 │  ├─────────┼─────────┼─────────┼─────────┼─────────┤           │
 │  │  🔵     │  🔴     │  ⬛     │  🔴     │  ⬜     │           │
 │  │  山     │  本     │  月    │  花     │  空     │           │
-│  │  blue   │  red    │assassin │ revealed│ neutral │           │
+│  │  blue   │  red    │assassin │ 公開済  │ neutral │           │
 │  ├─────────┼─────────┼─────────┼─────────┼─────────┤           │
 │  │  🔵     │  ⬜     │  🔴     │  🔵     │  ⬜     │           │
 │  │  水     │  火     │  木     │  金     │  土     │           │
-│  │ revealed│ neutral │  red    │  blue   │ revealed│           │
+│  │ 公開済  │ neutral │  red    │  blue   │ 公開済  │           │
 │  └─────────┴─────────┴─────────┴─────────┴─────────┘           │
 │  (以下略)                                                       │
 │                                                                 │
@@ -586,144 +1189,50 @@ Operative                       Server                          All
 
 ---
 
-## 8. ディレクトリ構成
+## 10. ゲームロジック詳細
 
-```
-codenames-clone/
-├── docker-compose.yml
-├── README.md
-│
-├── client/                          # フロントエンド
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── vite.config.ts
-│   ├── tailwind.config.js
-│   ├── index.html
-│   │
-│   ├── public/
-│   │   └── favicon.ico
-│   │
-│   └── src/
-│       ├── main.tsx
-│       ├── App.tsx
-│       ├── index.css
-│       │
-│       ├── components/              # 共通コンポーネント
-│       │   ├── ui/
-│       │   │   ├── Button.tsx
-│       │   │   ├── Input.tsx
-│       │   │   ├── Card.tsx
-│       │   │   └── Modal.tsx
-│       │   ├── Card.tsx             # ゲームカード
-│       │   ├── Board.tsx            # 5x5ボード
-│       │   ├── TeamPanel.tsx        # チーム表示
-│       │   ├── HintInput.tsx        # ヒント入力
-│       │   ├── PlayerList.tsx       # プレイヤー一覧
-│       │   └── Chat.tsx             # チャット
-│       │
-│       ├── pages/                   # ページコンポーネント
-│       │   ├── TopPage.tsx
-│       │   ├── CreateRoomPage.tsx
-│       │   ├── JoinRoomPage.tsx
-│       │   ├── RoomListPage.tsx
-│       │   ├── LobbyPage.tsx
-│       │   ├── GamePage.tsx
-│       │   ├── WordPackListPage.tsx
-│       │   ├── WordPackCreatePage.tsx
-│       │   └── WordPackEditPage.tsx
-│       │
-│       ├── hooks/                   # カスタムフック
-│       │   ├── useSocket.ts
-│       │   ├── useRoom.ts
-│       │   └── useGame.ts
-│       │
-│       ├── stores/                  # 状態管理 (Zustand)
-│       │   ├── playerStore.ts
-│       │   ├── roomStore.ts
-│       │   └── gameStore.ts
-│       │
-│       ├── services/                # API・Socket通信
-│       │   ├── api.ts
-│       │   └── socket.ts
-│       │
-│       ├── types/                   # 型定義
-│       │   └── index.ts
-│       │
-│       └── utils/                   # ユーティリティ
-│           └── helpers.ts
-│
-├── server/                          # バックエンド
-│   ├── package.json
-│   ├── tsconfig.json
-│   │
-│   ├── prisma/
-│   │   ├── schema.prisma
-│   │   ├── migrations/
-│   │   └── seed.ts                  # 初期単語データ投入
-│   │
-│   └── src/
-│       ├── index.ts                 # エントリーポイント
-│       ├── app.ts                   # Express設定
-│       │
-│       ├── config/
-│       │   └── index.ts             # 環境変数等
-│       │
-│       ├── routes/                  # REST APIルート
-│       │   ├── index.ts
-│       │   ├── rooms.ts
-│       │   └── wordPacks.ts
-│       │
-│       ├── controllers/             # コントローラー
-│       │   ├── roomController.ts
-│       │   └── wordPackController.ts
-│       │
-│       ├── services/                # ビジネスロジック
-│       │   ├── roomService.ts
-│       │   ├── gameService.ts
-│       │   ├── wordPackService.ts
-│       │   └── cleanupService.ts    # 期限切れルーム削除
-│       │
-│       ├── socket/                  # WebSocket処理
-│       │   ├── index.ts
-│       │   ├── handlers/
-│       │   │   ├── roomHandler.ts
-│       │   │   ├── gameHandler.ts
-│       │   │   └── chatHandler.ts
-│       │   └── middleware.ts
-│       │
-│       ├── types/                   # 型定義
-│       │   └── index.ts
-│       │
-│       └── utils/                   # ユーティリティ
-│           ├── codeGenerator.ts     # ルームコード生成
-│           └── cardGenerator.ts     # カード配置生成
-│
-└── shared/                          # 共有型定義（オプション）
-    └── types/
-        └── index.ts
-```
-
----
-
-## 9. ゲームロジック詳細
-
-### 9.1 ゲーム開始条件
+### 10.1 ゲーム開始条件
 - 両チームに最低1人ずつプレイヤーがいる
 - 両チームにスパイマスターが1人ずついる
 - ホストのみがゲーム開始可能
 
-### 9.2 カード配置生成
-```
-合計25枚:
-- 先攻チーム: 9枚
-- 後攻チーム: 8枚
-- 一般市民: 7枚
-- 暗殺者: 1枚
+### 10.2 カード配置生成
 
-先攻は赤チーム固定（またはランダム選択オプション）
+```typescript
+// utils/cardGenerator.ts
+
+import type { CardType } from '@/types'
+
+interface GeneratedCard {
+  word: string
+  type: CardType
+}
+
+export function generateCards(words: string[]): GeneratedCard[] {
+  // ランダムに25語選択
+  const shuffledWords = [...words].sort(() => Math.random() - 0.5)
+  const selectedWords = shuffledWords.slice(0, 25)
+  
+  // カードタイプの配列を作成
+  const types: CardType[] = [
+    ...Array(9).fill('red'),      // 赤9枚（先攻）
+    ...Array(8).fill('blue'),     // 青8枚
+    ...Array(7).fill('neutral'),  // 中立7枚
+    'assassin',                   // 暗殺者1枚
+  ]
+  
+  // タイプをシャッフル
+  const shuffledTypes = types.sort(() => Math.random() - 0.5)
+  
+  // カード生成
+  return selectedWords.map((word, index) => ({
+    word,
+    type: shuffledTypes[index],
+  }))
+}
 ```
 
-### 9.3 ターン進行
+### 10.3 ターン進行
 1. スパイマスターがヒント（単語 + 数字）を入力
 2. オペレーティブがカードを選択
 3. カード結果に応じて:
@@ -734,19 +1243,21 @@ codenames-clone/
 4. 推測回数は「ヒントの数字 + 1」まで
 5. パスでターン終了
 
-### 9.4 勝利条件
+### 10.4 勝利条件
 - 自チームのカードを全て公開
 - 相手チームが暗殺者を選択
 
-### 9.5 ヒントのルール（UIで案内）
+### 10.5 ヒントのルール（UIで案内）
 - ボード上の単語は使用不可
-- 数字のみ、「0」「∞（無制限）」は選択可能に
+- 数字のみのヒントは不可
+- 「0」は「関連なし、好きに推測して」の意味
+- 「∞（無制限）」も選択可能
 
 ---
 
-## 10. エラーハンドリング
+## 11. エラーハンドリング
 
-### 10.1 エラーコード
+### 11.1 エラーコード
 
 | コード | 説明 |
 |--------|------|
@@ -758,22 +1269,51 @@ codenames-clone/
 | INVALID_HINT | 無効なヒント |
 | WORD_PACK_NOT_FOUND | 単語パックが存在しない |
 | INSUFFICIENT_WORDS | 単語パックの単語数が25未満 |
+| INVALID_CARD | 無効なカード選択 |
 
 ---
 
-## 11. 今後の拡張案
+## 12. 環境変数
 
-- [ ] ユーザー登録・ログイン機能
+```env
+# .env.local
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+---
+
+## 13. デプロイ
+
+### 13.1 Supabase設定
+1. Supabaseプロジェクト作成
+2. SQLスキーマ実行（マイグレーション）
+3. seed.sql実行（初期単語データ）
+4. Realtime有効化（rooms, players, cards, hints テーブル）
+5. pg_cronでクリーンアップジョブ設定
+
+### 13.2 フロントエンド
+1. Vercel / Netlifyにデプロイ
+2. 環境変数設定
+3. ビルド & デプロイ
+
+---
+
+## 14. 今後の拡張案
+
+- [ ] ユーザー登録・ログイン機能（Supabase Auth）
 - [ ] ゲーム履歴・統計
 - [ ] AIスパイマスター（LLMでヒント自動生成）
 - [ ] 英語版単語パック追加
 - [ ] カスタムテーマ（デュエット、アンダーカバー等）
-- [ ] モバイルアプリ（React Native）
+- [ ] モバイルアプリ（React Native + Supabase）
+- [ ] Edge Functionsでサーバーサイドバリデーション強化
 
 ---
 
-## 12. 参考リンク
+## 15. 参考リンク
 
 - [Codenames 公式ルール](https://czechgames.com/files/rules/codenames-rules-en.pdf)
-- [Socket.io ドキュメント](https://socket.io/docs/v4/)
-- [Prisma ドキュメント](https://www.prisma.io/docs)
+- [Supabase ドキュメント](https://supabase.com/docs)
+- [Supabase Realtime](https://supabase.com/docs/guides/realtime)
+- [Supabase JavaScript Client](https://supabase.com/docs/reference/javascript)
