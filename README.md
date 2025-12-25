@@ -1,6 +1,6 @@
-# コードネームクローン 🎯
+# OKANAME 🎯
 
-ボードゲーム「コードネーム（Codenames）」のWebクローンアプリケーション。
+ボードゲーム「コードネーム（Codenames）」をベースにしたWebゲームアプリケーション。
 ブラウザ上でリアルタイムマルチプレイが可能です。
 
 ## 🎮 機能
@@ -51,7 +51,7 @@
 ### 1. リポジトリのクローン
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/codenames-clone.git
+git clone https://github.com/xtc1988/codenames-clone.git
 cd codenames-clone
 ```
 
@@ -156,7 +156,7 @@ vercel --prod
 ## 📁 プロジェクト構成
 
 ```
-codenames-clone/
+okaname/
 ├── client/                  # フロントエンド
 │   ├── src/
 │   │   ├── components/      # UIコンポーネント
