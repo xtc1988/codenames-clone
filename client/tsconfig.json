@@ -33,7 +33,9 @@
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "__tests__",
-    "e2e"
+    "e2e",
+    "src/test",
+    "**/test/**"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
