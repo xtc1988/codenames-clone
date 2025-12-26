@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { Card, Hint, Team, RoomStatus, CardType } from '@/types';
 import { generateCardLayout, selectRandomWords, checkWinner } from '@/utils/gameLogic';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * ゲームを開始
@@ -29,6 +30,7 @@ export async function startGame(roomId: string, wordPackId: string): Promise<Car
 
     // 4. カード作成
     const cardsToInsert = selectedWords.map((word, index) => ({
+      id: uuidv4(),
       room_id: roomId,
       word,
       position: index,
