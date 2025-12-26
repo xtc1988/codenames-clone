@@ -25,7 +25,7 @@ export default function LobbyPage() {
     setError('');
 
     try {
-      console.log('[LobbyPage] loadRoom開始');
+      console.log('[LobbyPage] loadRoom開始 @', new Date().toISOString());
       const roomData = await getRoomByCode(code);
 
       if (!roomData) {
