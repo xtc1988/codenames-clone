@@ -25,16 +25,25 @@ export default function LobbyPage() {
     setError('');
 
     try {
+      console.log('[LobbyPage] loadRoom開始');
       const roomData = await getRoomByCode(code);
 
       if (!roomData) {
+        console.error('[LobbyPage] ルームが見つかりません');
         setError('ルームが見つかりません');
         setLoading(false);
         return;
       }
 
+      console.log('[LobbyPage] getRoomByCode結果:', {
+        playersCount: roomData.players?.length || 0,
+        players: roomData.players?.map(p => ({ id: p.id, nickname: p.nickname, team: p.team, role: p.role })),
+      });
+
       setRoom(roomData);
       setPlayers(roomData.players || []);
+
+      console.log('[LobbyPage] setPlayers完了');
     } catch (err) {
       console.error('[LobbyPage] エラー:', err);
       setError('ルーム情報の取得に失敗しました');
