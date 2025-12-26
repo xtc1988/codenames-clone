@@ -119,6 +119,28 @@ export default function LobbyPage() {
     }
   };
 
+  // チーム+役割を同時に変更（race condition回避）
+  const handleTeamAndRoleChange = async (team: Team, role: PlayerRole | null) => {
+    if (!currentPlayer || !code) return;
+
+    try {
+      const updated = await updatePlayer({
+        playerId: currentPlayer.id,
+        team,
+        role: team === Team.SPECTATOR ? null : role,
+      });
+
+      setCurrentPlayer(updated);
+      await loadRoom();
+
+      // Broadcast送信
+      await broadcast('player_updated', updated);
+    } catch (err) {
+      console.error('[LobbyPage] チーム・役割変更エラー:', err);
+      setError('チーム・役割変更に失敗しました');
+    }
+  };
+
   // ゲーム開始条件チェック
   const canStartGame = (): boolean => {
     if (!currentPlayer?.isHost) return false;
@@ -265,20 +287,14 @@ export default function LobbyPage() {
             {currentPlayer && (
               <div className="space-y-2">
                 <button
-                  onClick={() => {
-                    handleTeamChange(Team.RED);
-                    handleRoleChange(PlayerRole.SPYMASTER);
-                  }}
+                  onClick={() => handleTeamAndRoleChange(Team.RED, PlayerRole.SPYMASTER)}
                   disabled={!!redSpymaster && redSpymaster.id !== currentPlayer.id}
                   className="btn-secondary w-full text-sm disabled:opacity-50"
                 >
                   スパイマスターになる
                 </button>
                 <button
-                  onClick={() => {
-                    handleTeamChange(Team.RED);
-                    handleRoleChange(PlayerRole.OPERATIVE);
-                  }}
+                  onClick={() => handleTeamAndRoleChange(Team.RED, PlayerRole.OPERATIVE)}
                   className="btn-secondary w-full text-sm"
                 >
                   オペレーティブになる
@@ -329,20 +345,14 @@ export default function LobbyPage() {
             {currentPlayer && (
               <div className="space-y-2">
                 <button
-                  onClick={() => {
-                    handleTeamChange(Team.BLUE);
-                    handleRoleChange(PlayerRole.SPYMASTER);
-                  }}
+                  onClick={() => handleTeamAndRoleChange(Team.BLUE, PlayerRole.SPYMASTER)}
                   disabled={!!blueSpymaster && blueSpymaster.id !== currentPlayer.id}
                   className="btn-secondary w-full text-sm disabled:opacity-50"
                 >
                   スパイマスターになる
                 </button>
                 <button
-                  onClick={() => {
-                    handleTeamChange(Team.BLUE);
-                    handleRoleChange(PlayerRole.OPERATIVE);
-                  }}
+                  onClick={() => handleTeamAndRoleChange(Team.BLUE, PlayerRole.OPERATIVE)}
                   className="btn-secondary w-full text-sm"
                 >
                   オペレーティブになる
