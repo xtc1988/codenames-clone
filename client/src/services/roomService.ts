@@ -121,13 +121,13 @@ export async function createRoom(params: {
  */
 export async function getRoomByCode(code: string): Promise<Room | null> {
   try {
+    // ルーム情報を取得
     const { data, error } = await supabase
       .from('rooms')
       .select(
         `
         *,
-        word_pack:word_packs(*),
-        players(*)
+        word_pack:word_packs(*)
       `
       )
       .eq('code', code.toUpperCase())
@@ -137,6 +137,18 @@ export async function getRoomByCode(code: string): Promise<Room | null> {
       console.error('[roomService] ルーム取得エラー:', error);
       return null;
     }
+
+    // プレイヤー情報を別クエリで取得
+    const { data: playersData, error: playersError } = await supabase
+      .from('players')
+      .select('*')
+      .eq('room_id', data.id);
+
+    if (playersError) {
+      console.error('[roomService] プレイヤー取得エラー:', playersError);
+    }
+
+    const players = playersData || [];
 
     return {
       id: data.id,
@@ -162,7 +174,7 @@ export async function getRoomByCode(code: string): Promise<Room | null> {
             createdAt: data.word_pack.created_at,
           }
         : undefined,
-      players: data.players?.map((p: any) => ({
+      players: players.map((p: any) => ({
         id: p.id,
         roomId: p.room_id,
         nickname: p.nickname,
