@@ -43,7 +43,28 @@ export function useRealtime(options: UseRealtimeOptions) {
     // Realtimeチャンネル作成
     const channel = supabase.channel(channelName);
 
-    // Broadcast受信設定
+    // Postgres Changes: playersテーブルの変更を購読
+    channel.on(
+      'postgres_changes',
+      {
+        event: '*', // INSERT, UPDATE, DELETE全て
+        schema: 'public',
+        table: 'players',
+      },
+      (payload) => {
+        console.log('[useRealtime] postgres_changes - players:', payload);
+        // UPDATEまたはINSERTの場合、onPlayerUpdatedを呼ぶ
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+          onPlayerUpdated?.(payload.new);
+        }
+        // DELETEの場合、onPlayerLeftを呼ぶ
+        if (payload.eventType === 'DELETE') {
+          onPlayerLeft?.(payload.old.id);
+        }
+      }
+    );
+
+    // Broadcast受信設定（ゲーム開始などのイベント用）
     channel
       .on('broadcast', { event: 'player_joined' }, ({ payload }) => {
         console.log('[useRealtime] player_joined:', payload);
