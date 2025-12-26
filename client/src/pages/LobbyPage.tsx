@@ -99,9 +99,16 @@ export default function LobbyPage() {
       setCurrentPlayer(updated);
 
       // players配列を即座に更新（楽観的更新）
-      setPlayers((prev) =>
-        prev.map((p) => (p.id === updated.id ? updated : p))
-      );
+      setPlayers((prev) => {
+        const exists = prev.some((p) => p.id === updated.id);
+        if (exists) {
+          // 既存プレイヤーの更新
+          return prev.map((p) => (p.id === updated.id ? updated : p));
+        } else {
+          // 新規プレイヤーの追加
+          return [...prev, updated];
+        }
+      });
 
       // バックグラウンドでloadRoomを呼んで検証
       loadRoom();
@@ -127,9 +134,16 @@ export default function LobbyPage() {
       setCurrentPlayer(updated);
 
       // players配列を即座に更新（楽観的更新）
-      setPlayers((prev) =>
-        prev.map((p) => (p.id === updated.id ? updated : p))
-      );
+      setPlayers((prev) => {
+        const exists = prev.some((p) => p.id === updated.id);
+        if (exists) {
+          // 既存プレイヤーの更新
+          return prev.map((p) => (p.id === updated.id ? updated : p));
+        } else {
+          // 新規プレイヤーの追加
+          return [...prev, updated];
+        }
+      });
 
       // バックグラウンドでloadRoomを呼んで検証
       loadRoom();
@@ -156,9 +170,16 @@ export default function LobbyPage() {
       setCurrentPlayer(updated);
 
       // players配列を即座に更新（楽観的更新）
-      setPlayers((prev) =>
-        prev.map((p) => (p.id === updated.id ? updated : p))
-      );
+      setPlayers((prev) => {
+        const exists = prev.some((p) => p.id === updated.id);
+        if (exists) {
+          // 既存プレイヤーの更新
+          return prev.map((p) => (p.id === updated.id ? updated : p));
+        } else {
+          // 新規プレイヤーの追加
+          return [...prev, updated];
+        }
+      });
 
       // バックグラウンドでloadRoomを呼んで検証
       loadRoom();
