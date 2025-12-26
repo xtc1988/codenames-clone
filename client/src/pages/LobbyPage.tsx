@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getRoomByCode, updatePlayer } from '@/services/roomService';
 import { usePlayerStore } from '@/stores/playerStore';
@@ -18,33 +18,8 @@ export default function LobbyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Realtime統合
-  useRealtime({
-    roomCode: code || '',
-    onPlayerUpdated: (player) => {
-      console.log('[LobbyPage] プレイヤー更新受信:', player);
-      // プレイヤーリストを再読み込み
-      loadRoom();
-    },
-    onGameStarted: () => {
-      console.log('[LobbyPage] ゲーム開始受信');
-      // ゲーム画面に遷移
-      navigate(`/room/${code}/game`);
-    },
-  });
-
-  // ルーム情報取得
-  useEffect(() => {
-    if (!code) {
-      setError('ルームコードが指定されていません');
-      setLoading(false);
-      return;
-    }
-
-    loadRoom();
-  }, [code]);
-
-  async function loadRoom() {
+  // ルーム情報取得（useCallbackで安定化）
+  const loadRoom = useCallback(async () => {
     if (!code) return;
 
     setLoading(true);
@@ -67,7 +42,33 @@ export default function LobbyPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [code, setRoom, setPlayers]);
+
+  // Realtime統合
+  useRealtime({
+    roomCode: code || '',
+    onPlayerUpdated: useCallback((player) => {
+      console.log('[LobbyPage] プレイヤー更新受信:', player);
+      // プレイヤーリストを再読み込み
+      loadRoom();
+    }, [loadRoom]),
+    onGameStarted: useCallback(() => {
+      console.log('[LobbyPage] ゲーム開始受信');
+      // ゲーム画面に遷移
+      navigate(`/room/${code}/game`);
+    }, [navigate, code]),
+  });
+
+  // ルーム情報取得
+  useEffect(() => {
+    if (!code) {
+      setError('ルームコードが指定されていません');
+      setLoading(false);
+      return;
+    }
+
+    loadRoom();
+  }, [code, loadRoom]);
 
   // チーム変更
   const handleTeamChange = async (team: Team) => {
