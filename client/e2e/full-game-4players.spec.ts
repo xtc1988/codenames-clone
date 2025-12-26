@@ -8,6 +8,7 @@ import { test, expect, Page } from '@playwright/test';
  */
 test.describe('Full Game Flow with 4 Players', () => {
   test('should complete a full game with 4 players from start to finish', async ({ page, context }) => {
+    test.setTimeout(120000); // 2分に延長
     const BASE_URL = 'https://codenamesclone.vercel.app';
 
     console.log('\n=== 4名プレイヤー完全ゲームフローテスト開始 ===\n');
@@ -57,53 +58,42 @@ test.describe('Full Game Flow with 4 Players', () => {
     console.log(`✅ ルーム作成成功: ${roomCode}`);
     console.log(`ルームURL: ${roomUrl}`);
 
-    // === ステップ2: 他の3名のプレイヤーを追加 ===
+    // === ステップ2: 他の3名のプレイヤーを/joinページ経由で参加 ===
     console.log('\n--- ステップ2: 他の3名のプレイヤー参加 ---');
+
+    const joinPlayer = async (playerName: string, playerPage: Page) => {
+      setupLogging(playerPage, playerName);
+
+      // /joinページにアクセス
+      await playerPage.goto(`${BASE_URL}/join`);
+      await playerPage.waitForTimeout(1000);
+
+      // ルームコードとニックネームを入力
+      await playerPage.fill('#roomCode', roomCode!);
+      await playerPage.fill('#nickname', playerName);
+
+      // 参加ボタンをクリック
+      const joinButton = playerPage.locator('button[type="submit"]');
+      await joinButton.click();
+
+      // ロビーページへの遷移を待機
+      await playerPage.waitForURL(/\/room\/[A-Z0-9]{6}/, { timeout: 10000 });
+      await playerPage.waitForTimeout(2000);
+
+      console.log(`✅ ${playerName} 参加成功`);
+    };
 
     // プレイヤー2: 赤チーム・オペレーティブ
     const redOperative = await context.newPage();
-    setupLogging(redOperative, '赤オペレーティブ');
-    await redOperative.goto(roomUrl!);
-
-    let nicknameInput = redOperative.locator('input[placeholder*="ニックネーム"], input[placeholder*="名前"]');
-    let hasNicknameInput = await nicknameInput.isVisible().catch(() => false);
-
-    if (hasNicknameInput) {
-      await nicknameInput.fill('赤オペレーティブ');
-      await redOperative.click('button:has-text("参加"), button:has-text("入室")');
-      await redOperative.waitForTimeout(1000);
-    }
-    console.log('✅ プレイヤー2（赤オペレーティブ）参加成功');
+    await joinPlayer('赤オペレーティブ', redOperative);
 
     // プレイヤー3: 青チーム・スパイマスター
     const blueSpymaster = await context.newPage();
-    setupLogging(blueSpymaster, '青スパイマスター');
-    await blueSpymaster.goto(roomUrl!);
-
-    nicknameInput = blueSpymaster.locator('input[placeholder*="ニックネーム"], input[placeholder*="名前"]');
-    hasNicknameInput = await nicknameInput.isVisible().catch(() => false);
-
-    if (hasNicknameInput) {
-      await nicknameInput.fill('青スパイマスター');
-      await blueSpymaster.click('button:has-text("参加"), button:has-text("入室")');
-      await blueSpymaster.waitForTimeout(1000);
-    }
-    console.log('✅ プレイヤー3（青スパイマスター）参加成功');
+    await joinPlayer('青スパイマスター', blueSpymaster);
 
     // プレイヤー4: 青チーム・オペレーティブ
     const blueOperative = await context.newPage();
-    setupLogging(blueOperative, '青オペレーティブ');
-    await blueOperative.goto(roomUrl!);
-
-    nicknameInput = blueOperative.locator('input[placeholder*="ニックネーム"], input[placeholder*="名前"]');
-    hasNicknameInput = await nicknameInput.isVisible().catch(() => false);
-
-    if (hasNicknameInput) {
-      await nicknameInput.fill('青オペレーティブ');
-      await blueOperative.click('button:has-text("参加"), button:has-text("入室")');
-      await blueOperative.waitForTimeout(1000);
-    }
-    console.log('✅ プレイヤー4（青オペレーティブ）参加成功');
+    await joinPlayer('青オペレーティブ', blueOperative);
 
     // 全員の参加を確認
     await page.waitForTimeout(2000);
@@ -121,57 +111,42 @@ test.describe('Full Game Flow with 4 Players', () => {
     console.log('\n--- ステップ3: チーム・役割選択 ---');
 
     // ホスト（赤スパイマスター）: 赤チーム・スパイマスターを選択
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     const redSpymasterBtn = page.getByRole('button', { name: /スパイマスターになる/ }).first();
-    const hasRedSpyBtn = await redSpymasterBtn.isVisible().catch(() => false);
-    if (hasRedSpyBtn) {
-      await redSpymasterBtn.click();
-      await page.waitForTimeout(2000);
-      console.log('✅ ホスト: 赤チーム・スパイマスター選択');
-    } else {
-      console.log('❌ 赤チーム・スパイマスターボタンが見つかりません');
-      await page.screenshot({ path: 'no-red-spymaster-btn.png' });
-    }
+    await redSpymasterBtn.click();
+    await page.waitForTimeout(4000); // Realtime同期待機
+    console.log('✅ ホスト: 赤チーム・スパイマスター選択');
 
     // プレイヤー2（赤オペレーティブ）: 赤チーム・オペレーティブを選択
-    await redOperative.waitForTimeout(2000);
+    await redOperative.waitForTimeout(3000);
     const redOperativeBtn = redOperative.getByRole('button', { name: /オペレーティブになる/ }).first();
-    const hasRedOpBtn = await redOperativeBtn.isVisible().catch(() => false);
-    if (hasRedOpBtn) {
-      await redOperativeBtn.click();
-      await redOperative.waitForTimeout(2000);
-      console.log('✅ プレイヤー2: 赤チーム・オペレーティブ選択');
-    } else {
-      console.log('⚠️ 赤チーム・オペレーティブボタンが見つかりません');
-    }
+    await redOperativeBtn.click();
+    await redOperative.waitForTimeout(4000); // Realtime同期待機
+    console.log('✅ プレイヤー2: 赤チーム・オペレーティブ選択');
 
     // プレイヤー3（青スパイマスター）: 青チーム・スパイマスターを選択
-    await blueSpymaster.waitForTimeout(2000);
+    await blueSpymaster.waitForTimeout(3000);
     const blueSpymasterBtns = blueSpymaster.getByRole('button', { name: /スパイマスターになる/ });
     const blueSpyBtnCount = await blueSpymasterBtns.count();
     if (blueSpyBtnCount >= 2) {
       await blueSpymasterBtns.nth(1).click(); // 2番目のボタン（青チーム）
-      await blueSpymaster.waitForTimeout(2000);
-      console.log('✅ プレイヤー3: 青チーム・スパイマスター選択');
-    } else if (blueSpyBtnCount === 1) {
+    } else {
       await blueSpymasterBtns.first().click();
-      await blueSpymaster.waitForTimeout(2000);
-      console.log('✅ プレイヤー3: スパイマスター選択（青想定）');
     }
+    await blueSpymaster.waitForTimeout(4000); // Realtime同期待機
+    console.log('✅ プレイヤー3: 青チーム・スパイマスター選択');
 
     // プレイヤー4（青オペレーティブ）: 青チーム・オペレーティブを選択
-    await blueOperative.waitForTimeout(2000);
+    await blueOperative.waitForTimeout(3000);
     const blueOperativeBtns = blueOperative.getByRole('button', { name: /オペレーティブになる/ });
     const blueOpBtnCount = await blueOperativeBtns.count();
     if (blueOpBtnCount >= 2) {
       await blueOperativeBtns.nth(1).click(); // 2番目のボタン（青チーム）
-      await blueOperative.waitForTimeout(2000);
-      console.log('✅ プレイヤー4: 青チーム・オペレーティブ選択');
-    } else if (blueOpBtnCount === 1) {
+    } else {
       await blueOperativeBtns.first().click();
-      await blueOperative.waitForTimeout(2000);
-      console.log('✅ プレイヤー4: オペレーティブ選択（青想定）');
     }
+    await blueOperative.waitForTimeout(4000); // Realtime同期待機
+    console.log('✅ プレイヤー4: 青チーム・オペレーティブ選択');
 
     // 選択結果のスクリーンショット
     await page.waitForTimeout(2000);
@@ -182,25 +157,22 @@ test.describe('Full Game Flow with 4 Players', () => {
     console.log('\n--- ステップ4: ゲーム開始 ---');
 
     const startButton = page.getByRole('button', { name: /ゲームを開始|スタート/i });
-    const hasStartBtn = await startButton.isVisible().catch(() => false);
+    await startButton.waitFor({ state: 'visible', timeout: 5000 });
 
-    if (hasStartBtn) {
-      await startButton.click();
-      await page.waitForTimeout(3000);
-      console.log('✅ ゲーム開始ボタンをクリック');
+    // ボタンが有効になるまで待機
+    await expect(startButton).toBeEnabled({ timeout: 10000 });
 
-      // ゲーム画面への遷移を確認
-      const isGamePage = await page.locator('text=/ターン|カード|ヒント/').isVisible().catch(() => false);
-      if (isGamePage) {
-        console.log('✅ ゲーム画面に遷移成功');
-      } else {
-        console.log('⚠️ ゲーム画面への遷移を確認できませんでした');
-        await page.screenshot({ path: 'game-start-failed-4p.png' });
-      }
+    await startButton.click();
+    await page.waitForTimeout(3000);
+    console.log('✅ ゲーム開始ボタンをクリック');
+
+    // ゲーム画面への遷移を確認
+    const isGamePage = await page.locator('text=/ターン|カード|ヒント/').isVisible().catch(() => false);
+    if (isGamePage) {
+      console.log('✅ ゲーム画面に遷移成功');
     } else {
-      console.log('❌ ゲーム開始ボタンが見つかりませんでした');
-      await page.screenshot({ path: 'no-start-button-4p.png' });
-      throw new Error('ゲーム開始ボタンが見つかりません');
+      console.log('⚠️ ゲーム画面への遷移を確認できませんでした');
+      await page.screenshot({ path: 'game-start-failed-4p.png' });
     }
 
     // === ステップ5: ゲームプレイ ===
