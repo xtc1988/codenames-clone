@@ -20,8 +20,13 @@ test.describe('Full Game Flow with 4 Players', () => {
     // ログとエラーのキャプチャ（全プレイヤー共通）
     const setupLogging = (playerPage: Page, playerName: string) => {
       playerPage.on('console', (msg) => {
+        const text = msg.text();
+        // LobbyPage, roomService, GamePageのログをすべてキャプチャ
+        if (text.includes('[LobbyPage]') || text.includes('[roomService]') || text.includes('[GamePage]')) {
+          console.log(`[${playerName}]`, text);
+        }
         if (msg.type() === 'error') {
-          console.log(`[${playerName} エラー]:`, msg.text());
+          console.log(`[${playerName} エラー]:`, text);
         }
       });
 
