@@ -67,6 +67,13 @@ export default function LobbyPage() {
     }
 
     loadRoom();
+
+    // Polling: 2秒ごとにルーム情報を更新（Realtime補助）
+    const interval = setInterval(() => {
+      loadRoom();
+    }, 2000);
+
+    return () => clearInterval(interval);
   }, [code, loadRoom]);
 
   // チーム変更
