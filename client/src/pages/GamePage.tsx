@@ -73,13 +73,21 @@ export default function GamePage() {
     setError('');
 
     try {
+      console.log('[GamePage] ゲームデータ読み込み開始');
       const roomData = await getRoomByCode(code);
 
       if (!roomData) {
+        console.error('[GamePage] ルームが見つかりません');
         setError('ルームが見つかりません');
         setLoading(false);
         return;
       }
+
+      console.log('[GamePage] ルーム情報取得:', {
+        status: roomData.status,
+        isHost: currentPlayer?.isHost,
+        playerId: currentPlayer?.id,
+      });
 
       setRoom(roomData);
       setPlayers(roomData.players || []);
@@ -88,13 +96,22 @@ export default function GamePage() {
 
       // ゲームが開始されていない場合は開始
       if (roomData.status === RoomStatus.WAITING && currentPlayer?.isHost) {
+        console.log('[GamePage] ゲーム開始処理開始（ホスト）');
         const newCards = await startGame(roomData.id, roomData.wordPackId);
+        console.log('[GamePage] カード生成完了:', newCards.length);
         setCards(newCards);
       } else if (roomData.status === RoomStatus.PLAYING || roomData.status === RoomStatus.FINISHED) {
+        console.log('[GamePage] ゲームデータ取得開始（既存ゲーム）');
         // ゲームデータ取得
         const gameData = await getGameData(roomData.id);
+        console.log('[GamePage] ゲームデータ取得完了:', {
+          cardsCount: gameData.cards.length,
+          hintsCount: gameData.hints.length,
+        });
         setCards(gameData.cards);
         setHints(gameData.hints);
+      } else {
+        console.warn('[GamePage] 想定外のルームステータス:', roomData.status);
       }
     } catch (err) {
       console.error('[GamePage] エラー:', err);
