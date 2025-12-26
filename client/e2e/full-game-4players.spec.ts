@@ -7,11 +7,15 @@ import { test, expect, Page } from '@playwright/test';
  * - ゲーム開始からカード選択、勝敗判定まで
  */
 test.describe('Full Game Flow with 4 Players', () => {
-  test('should complete a full game with 4 players from start to finish', async ({ page, context }) => {
+  test('should complete a full game with 4 players from start to finish', async ({ browser }) => {
     test.setTimeout(120000); // 2分に延長
     const BASE_URL = 'https://codenamesclone.vercel.app';
 
     console.log('\n=== 4名プレイヤー完全ゲームフローテスト開始 ===\n');
+
+    // ホスト用のcontext + page作成
+    const hostContext = await browser.newContext();
+    const page = await hostContext.newPage();
 
     // ログとエラーのキャプチャ（全プレイヤー共通）
     const setupLogging = (playerPage: Page, playerName: string) => {
@@ -83,16 +87,19 @@ test.describe('Full Game Flow with 4 Players', () => {
       console.log(`✅ ${playerName} 参加成功`);
     };
 
-    // プレイヤー2: 赤チーム・オペレーティブ
-    const redOperative = await context.newPage();
+    // プレイヤー2: 赤チーム・オペレーティブ（独立したcontext）
+    const redOperativeContext = await browser.newContext();
+    const redOperative = await redOperativeContext.newPage();
     await joinPlayer('赤オペレーティブ', redOperative);
 
-    // プレイヤー3: 青チーム・スパイマスター
-    const blueSpymaster = await context.newPage();
+    // プレイヤー3: 青チーム・スパイマスター（独立したcontext）
+    const blueSpymasterContext = await browser.newContext();
+    const blueSpymaster = await blueSpymasterContext.newPage();
     await joinPlayer('青スパイマスター', blueSpymaster);
 
-    // プレイヤー4: 青チーム・オペレーティブ
-    const blueOperative = await context.newPage();
+    // プレイヤー4: 青チーム・オペレーティブ（独立したcontext）
+    const blueOperativeContext = await browser.newContext();
+    const blueOperative = await blueOperativeContext.newPage();
     await joinPlayer('青オペレーティブ', blueOperative);
 
     // 全員の参加を確認
@@ -287,9 +294,10 @@ test.describe('Full Game Flow with 4 Players', () => {
     console.log('✅ 全プレイヤーのスクリーンショット保存完了');
     console.log('\n=== 4名プレイヤー完全ゲームフローテスト完了 ===\n');
 
-    // クリーンアップ
-    await redOperative.close();
-    await blueSpymaster.close();
-    await blueOperative.close();
+    // クリーンアップ（各contextをclose）
+    await hostContext.close();
+    await redOperativeContext.close();
+    await blueSpymasterContext.close();
+    await blueOperativeContext.close();
   });
 });
