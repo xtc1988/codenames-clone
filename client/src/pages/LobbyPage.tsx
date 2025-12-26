@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getRoomByCode, updatePlayer } from '@/services/roomService';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useRoomStore } from '@/stores/roomStore';
-import { Team, PlayerRole } from '@/types';
+import { Team, PlayerRole, Player } from '@/types';
 import { useRealtime } from '@/hooks/useRealtime';
 
 export default function LobbyPage() {
@@ -12,7 +12,7 @@ export default function LobbyPage() {
 
   const currentPlayer = usePlayerStore((state) => state.currentPlayer);
   const setCurrentPlayer = usePlayerStore((state) => state.setCurrentPlayer);
-  const { room, players, setRoom, setPlayers } = useRoomStore();
+  const { room, players, setRoom, setPlayers, addPlayer, updatePlayer: updatePlayerInStore } = useRoomStore();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -55,7 +55,7 @@ export default function LobbyPage() {
   // Realtime統合
   const { broadcast } = useRealtime({
     roomCode: code || '',
-    onPlayerUpdated: useCallback((player) => {
+    onPlayerUpdated: useCallback((player: Player) => {
       console.log('[LobbyPage] プレイヤー更新受信:', player);
       // プレイヤーリストを再読み込み
       loadRoom();
@@ -99,16 +99,14 @@ export default function LobbyPage() {
       setCurrentPlayer(updated);
 
       // players配列を即座に更新（楽観的更新）
-      setPlayers((prev) => {
-        const exists = prev.some((p) => p.id === updated.id);
-        if (exists) {
-          // 既存プレイヤーの更新
-          return prev.map((p) => (p.id === updated.id ? updated : p));
-        } else {
-          // 新規プレイヤーの追加
-          return [...prev, updated];
-        }
-      });
+      const existingPlayer = players.find((p: Player) => p.id === updated.id);
+      if (existingPlayer) {
+        // 既存プレイヤーの更新
+        updatePlayerInStore(updated.id, updated);
+      } else {
+        // 新規プレイヤーの追加
+        addPlayer(updated);
+      }
 
       // バックグラウンドでloadRoomを呼んで検証
       loadRoom();
@@ -118,41 +116,6 @@ export default function LobbyPage() {
     } catch (err) {
       console.error('[LobbyPage] チーム変更エラー:', err);
       setError('チーム変更に失敗しました');
-    }
-  };
-
-  // 役割変更
-  const handleRoleChange = async (role: PlayerRole | null) => {
-    if (!currentPlayer || !code) return;
-
-    try {
-      const updated = await updatePlayer({
-        playerId: currentPlayer.id,
-        role,
-      });
-
-      setCurrentPlayer(updated);
-
-      // players配列を即座に更新（楽観的更新）
-      setPlayers((prev) => {
-        const exists = prev.some((p) => p.id === updated.id);
-        if (exists) {
-          // 既存プレイヤーの更新
-          return prev.map((p) => (p.id === updated.id ? updated : p));
-        } else {
-          // 新規プレイヤーの追加
-          return [...prev, updated];
-        }
-      });
-
-      // バックグラウンドでloadRoomを呼んで検証
-      loadRoom();
-
-      // Broadcast送信
-      await broadcast('player_updated', updated);
-    } catch (err) {
-      console.error('[LobbyPage] 役割変更エラー:', err);
-      setError('役割変更に失敗しました');
     }
   };
 
@@ -170,16 +133,14 @@ export default function LobbyPage() {
       setCurrentPlayer(updated);
 
       // players配列を即座に更新（楽観的更新）
-      setPlayers((prev) => {
-        const exists = prev.some((p) => p.id === updated.id);
-        if (exists) {
-          // 既存プレイヤーの更新
-          return prev.map((p) => (p.id === updated.id ? updated : p));
-        } else {
-          // 新規プレイヤーの追加
-          return [...prev, updated];
-        }
-      });
+      const existingPlayer = players.find((p: Player) => p.id === updated.id);
+      if (existingPlayer) {
+        // 既存プレイヤーの更新
+        updatePlayerInStore(updated.id, updated);
+      } else {
+        // 新規プレイヤーの追加
+        addPlayer(updated);
+      }
 
       // バックグラウンドでloadRoomを呼んで検証
       loadRoom();

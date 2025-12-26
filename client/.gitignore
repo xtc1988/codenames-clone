@@ -31,3 +31,6 @@ dist-ssr
 # Test results
 playwright-report
 test-results
+
+.vercel
+.env*.local
