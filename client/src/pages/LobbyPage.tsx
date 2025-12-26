@@ -88,7 +88,14 @@ export default function LobbyPage() {
       });
 
       setCurrentPlayer(updated);
-      await loadRoom();
+
+      // players配列を即座に更新（楽観的更新）
+      setPlayers((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p))
+      );
+
+      // バックグラウンドでloadRoomを呼んで検証
+      loadRoom();
 
       // Broadcast送信
       await broadcast('player_updated', updated);
@@ -109,7 +116,14 @@ export default function LobbyPage() {
       });
 
       setCurrentPlayer(updated);
-      await loadRoom();
+
+      // players配列を即座に更新（楽観的更新）
+      setPlayers((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p))
+      );
+
+      // バックグラウンドでloadRoomを呼んで検証
+      loadRoom();
 
       // Broadcast送信
       await broadcast('player_updated', updated);
@@ -131,7 +145,14 @@ export default function LobbyPage() {
       });
 
       setCurrentPlayer(updated);
-      await loadRoom();
+
+      // players配列を即座に更新（楽観的更新）
+      setPlayers((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p))
+      );
+
+      // バックグラウンドでloadRoomを呼んで検証
+      loadRoom();
 
       // Broadcast送信
       await broadcast('player_updated', updated);
