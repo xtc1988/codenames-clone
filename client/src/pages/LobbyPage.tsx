@@ -5,7 +5,6 @@ import { usePlayerStore } from '@/stores/playerStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { Team, PlayerRole } from '@/types';
 import { useRealtime } from '@/hooks/useRealtime';
-import { broadcastPlayerUpdated, broadcastGameStarted } from '@/services/realtimeService';
 
 export default function LobbyPage() {
   const { code } = useParams<{ code: string }>();
@@ -45,7 +44,7 @@ export default function LobbyPage() {
   }, [code, setRoom, setPlayers]);
 
   // Realtime統合
-  useRealtime({
+  const { broadcast } = useRealtime({
     roomCode: code || '',
     onPlayerUpdated: useCallback((player) => {
       console.log('[LobbyPage] プレイヤー更新受信:', player);
@@ -85,7 +84,7 @@ export default function LobbyPage() {
       await loadRoom();
 
       // Broadcast送信
-      await broadcastPlayerUpdated(code, updated);
+      await broadcast('player_updated', updated);
     } catch (err) {
       console.error('[LobbyPage] チーム変更エラー:', err);
       setError('チーム変更に失敗しました');
@@ -106,7 +105,7 @@ export default function LobbyPage() {
       await loadRoom();
 
       // Broadcast送信
-      await broadcastPlayerUpdated(code, updated);
+      await broadcast('player_updated', updated);
     } catch (err) {
       console.error('[LobbyPage] 役割変更エラー:', err);
       setError('役割変更に失敗しました');
@@ -139,7 +138,7 @@ export default function LobbyPage() {
 
     try {
       // ゲーム開始通知をBroadcast
-      await broadcastGameStarted(code, {
+      await broadcast('game_started', {
         roomCode: code,
         timestamp: new Date().toISOString(),
       });
