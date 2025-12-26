@@ -102,17 +102,19 @@ test.describe('Full Game Flow with 4 Players', () => {
     const blueOperative = await blueOperativeContext.newPage();
     await joinPlayer('青オペレーティブ', blueOperative);
 
-    // 全員の参加を確認
-    await page.waitForTimeout(2000);
+    // 全員の参加を確認（最大20秒待機）
     const players = ['赤スパイマスター', '赤オペレーティブ', '青スパイマスター', '青オペレーティブ'];
     for (const playerName of players) {
-      const isVisible = await page.getByText(playerName).isVisible().catch(() => false);
-      if (isVisible) {
+      try {
+        await page.getByText(playerName).waitFor({ state: 'visible', timeout: 20000 });
         console.log(`✅ ${playerName}がロビーに表示されています`);
-      } else {
-        console.log(`⚠️ ${playerName}が表示されていません`);
+      } catch {
+        console.log(`⚠️ ${playerName}が20秒待機しても表示されませんでした`);
       }
     }
+
+    // 追加で5秒待機して安定化
+    await page.waitForTimeout(5000);
 
     // === ステップ3: チーム・役割選択 ===
     console.log('\n--- ステップ3: チーム・役割選択 ---');
