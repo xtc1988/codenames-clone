@@ -1,41 +1,54 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
       colors: {
-        // Gaming-inspired unified dark palette
+        // Tokyo Night inspired - warm, readable, NOT AI-looking
         game: {
-          bg: '#0F0F23',        // Deep purple-navy background
-          surface: '#1a1a2e',   // Slightly lighter purple surface
-          border: '#2d2d44',    // Soft purple border
-          accent: '#7C3AED',    // Vibrant purple accent
+          bg: '#1a1b26',         // Warm dark background
+          surface: '#24283b',    // Slightly lighter
+          border: '#414868',     // Muted purple-blue
+          accent: '#9ece6a',     // Success green
+          muted: '#565f89',      // Muted text
         },
         team: {
-          red: '#f43f5e',       // Rose 500 - vibrant red
-          'red-dark': '#be123c', // Rose 700
-          'red-light': '#fda4af', // Rose 300
-          blue: '#818cf8',      // Indigo 400 - brighter blue for dark bg
-          'blue-dark': '#6366f1', // Indigo 500
-          'blue-light': '#c7d2fe', // Indigo 200
+          red: '#f7768e',        // Soft rose
+          'red-dark': '#db4b6e',
+          'red-light': '#ffb3c1',
+          blue: '#7aa2f7',       // Soft blue
+          'blue-dark': '#5a7fd4',
+          'blue-light': '#b4c8ff',
         },
         card: {
-          default: '#2d2d44',   // Soft purple-slate (matches theme)
-          hover: '#3d3d5c',     // Lighter purple on hover
-          text: '#e2e8f0',      // Light text on dark cards
-          neutral: '#6b7280',   // Gray 500
-          assassin: '#1f1f1f',  // Near black
+          base: '#c0caf5',       // Light lavender for cards
+          surface: '#e0e7ff',    // Warmer white
+          text: '#1a1b26',       // Dark text on light cards
+          neutral: '#9aa5ce',    // Neutral card
+          assassin: '#1a1b26',   // Dark assassin
         },
       },
       fontFamily: {
-        sans: ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'],
+        // Playful Creative from ui-ux-pro-max
+        heading: ['Fredoka', 'sans-serif'],
+        body: ['Nunito', 'sans-serif'],
+      },
+      borderRadius: {
+        'card': '1rem',
       },
       boxShadow: {
-        'card': '0 2px 8px -2px rgba(124, 58, 237, 0.15), 0 4px 12px -4px rgba(0, 0, 0, 0.2)',
-        'card-hover': '0 8px 24px -8px rgba(124, 58, 237, 0.25), 0 12px 32px -12px rgba(0, 0, 0, 0.3)',
+        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.15)',
+        'glow-red': '0 0 20px rgba(247, 118, 142, 0.4)',
+        'glow-blue': '0 0 20px rgba(122, 162, 247, 0.4)',
+      },
+      transitionDuration: {
+        // Flat Design: 150-200ms
+        'fast': '150ms',
+        'normal': '200ms',
       },
     },
   },

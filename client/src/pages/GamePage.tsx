@@ -23,7 +23,7 @@ function PlayerPanel({ players, currentTurn }: { players: Player[]; currentTurn:
 
   const renderPlayer = (player: Player) => (
     <div key={player.id} className={"player-item " + (player.team === Team.RED ? "player-item-red" : player.team === Team.BLUE ? "player-item-blue" : "")}>
-      <span className="font-medium text-slate-100">{player.nickname}</span>
+      <span className="font-medium text-card-base">{player.nickname}</span>
       {player.role && (
         <span className={"role-badge ml-auto " + (player.role === PlayerRole.SPYMASTER ? "role-badge-spymaster" : "role-badge-operative")}>
           {player.role === PlayerRole.SPYMASTER ? "SM" : "OP"}
@@ -34,30 +34,30 @@ function PlayerPanel({ players, currentTurn }: { players: Player[]; currentTurn:
 
   return (
     <div className="player-panel space-y-4">
-      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Players</h3>
+      <h3 className="text-sm font-semibold text-game-muted uppercase tracking-wider">Players</h3>
       <div className="space-y-1">
-        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.RED ? "text-rose-400" : "text-slate-500")}>
+        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.RED ? "text-team-red" : "text-game-muted")}>
           <span className="team-dot team-dot-red"></span>
           <span>Red Team</span>
           {currentTurn === Team.RED && <span className="text-xs">(Turn)</span>}
         </div>
-        {redPlayers.length > 0 ? redPlayers.map(renderPlayer) : <div className="text-sm text-slate-600 pl-5">No players</div>}
+        {redPlayers.length > 0 ? redPlayers.map(renderPlayer) : <div className="text-sm text-game-muted pl-5">No players</div>}
       </div>
       <div className="space-y-1">
-        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.BLUE ? "text-indigo-400" : "text-slate-500")}>
+        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.BLUE ? "text-team-blue" : "text-game-muted")}>
           <span className="team-dot team-dot-blue"></span>
           <span>Blue Team</span>
           {currentTurn === Team.BLUE && <span className="text-xs">(Turn)</span>}
         </div>
-        {bluePlayers.length > 0 ? bluePlayers.map(renderPlayer) : <div className="text-sm text-slate-600 pl-5">No players</div>}
+        {bluePlayers.length > 0 ? bluePlayers.map(renderPlayer) : <div className="text-sm text-game-muted pl-5">No players</div>}
       </div>
       {spectators.length > 0 && (
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
-            <span className="w-3 h-3 rounded-full bg-slate-600"></span>
+          <div className="flex items-center gap-2 text-sm font-medium text-game-muted">
+            <span className="w-3 h-3 rounded-full bg-game-muted"></span>
             <span>Spectators</span>
           </div>
-          {spectators.map(player => (<div key={player.id} className="player-item"><span className="text-slate-400">{player.nickname}</span></div>))}
+          {spectators.map(player => (<div key={player.id} className="player-item"><span className="text-game-muted">{player.nickname}</span></div>))}
         </div>
       )}
     </div>
@@ -266,7 +266,7 @@ export default function GamePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-slate-400">Loading game...</p>
+        <p className="text-game-muted">Loading game...</p>
       </div>
     );
   }
@@ -275,7 +275,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card max-w-md">
-          <p className="text-rose-400 mb-4">{error}</p>
+          <p className="text-team-red mb-4">{error}</p>
           <Link to={`/room/${code}`} className="btn-primary inline-block">
             Back to Lobby
           </Link>
@@ -289,7 +289,7 @@ export default function GamePage() {
       <div className="max-w-[1600px] mx-auto"><div className="flex gap-6"><div className="hidden lg:block w-64 flex-shrink-0"><PlayerPanel players={players} currentTurn={currentTurn} /></div><div className="flex-1 min-w-0">
         {/* ヘッダー */}
         <div className="mb-4 flex items-center justify-between">
-          <Link to={`/room/${code}`} className="text-violet-400 hover:text-violet-300 hover:underline transition-colors text-sm">
+          <Link to={`/room/${code}`} className="text-team-blue hover:text-team-blue-light hover:underline transition-colors text-sm">
             ロビーに戻る
           </Link>
           <button onClick={loadGameData} className="btn-secondary text-sm px-3 py-1">
@@ -311,16 +311,16 @@ export default function GamePage() {
 
             <div className="text-lg font-bold">
               {winner ? (
-                <span className="text-emerald-400">
+                <span className="text-game-accent">
                    {winner === Team.RED ? ' Red Team' : ' Blue Team'} Wins!
                 </span>
               ) : (
                 <span>
                   Turn:{' '}
                   {currentTurn === Team.RED ? (
-                    <span className="text-rose-400"> 赤チーム</span>
+                    <span className="text-team-red"> 赤チーム</span>
                   ) : (
-                    <span className="text-indigo-400"> 青チーム</span>
+                    <span className="text-team-blue"> 青チーム</span>
                   )}
                 </span>
               )}
@@ -329,7 +329,7 @@ export default function GamePage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded">
+          <div className="mb-4 p-3 bg-team-red/20 border border-rose-500/30 text-team-red rounded">
             {error}
           </div>
         )}
@@ -340,7 +340,7 @@ export default function GamePage() {
             <p className="text-lg font-bold">
                Hint: "{latestHint.word}" {latestHint.count}
             </p>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-game-muted">
               by {latestHint.player?.nickname} ({latestHint.team === Team.RED ? ' 赤' : ' 青'})
             </p>
           </div>
@@ -408,7 +408,7 @@ export default function GamePage() {
         {/* 観戦者メッセージ */}
         {currentPlayer?.team === Team.SPECTATOR && (
           <div className="card text-center">
-            <p className="text-slate-400">You are spectating</p>
+            <p className="text-game-muted">You are spectating</p>
           </div>
         )}
       </div></div></div>
