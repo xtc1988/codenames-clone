@@ -9,58 +9,58 @@ interface GameCardProps {
 
 export default function GameCard({ card, isSpymaster, onSelect, disabled }: GameCardProps) {
   const getCardStyles = () => {
-    // Base: min 44px touch target (UX guideline), Flat Design rounded cards
-    const baseStyles = 'relative w-full aspect-[3/2] rounded-card font-heading font-semibold text-sm md:text-base transition-all duration-normal flex items-center justify-center p-2';
+    // 新聞/紙風カードスタイル - タイプライター風フォント、黒インクボーダー
+    const baseStyles = 'relative w-full aspect-[3/2] font-typewriter font-bold text-sm md:text-base transition-all duration-150 flex items-center justify-center p-2 border-3 border-ink-black';
 
-    // Revealed cards - solid team colors (Flat Design)
+    // 公開されたカード - チームカラーで塗りつぶし
     if (card.isRevealed) {
       switch (card.type) {
         case CardTypeEnum.RED:
-          return baseStyles + ' bg-team-red text-white shadow-glow-red cursor-default';
+          return baseStyles + ' bg-team-red text-paper-cream shadow-paper cursor-default';
         case CardTypeEnum.BLUE:
-          return baseStyles + ' bg-team-blue text-white shadow-glow-blue cursor-default';
+          return baseStyles + ' bg-team-blue text-paper-cream shadow-paper cursor-default';
         case CardTypeEnum.NEUTRAL:
-          return baseStyles + ' bg-card-neutral text-game-bg cursor-default opacity-70';
+          return baseStyles + ' bg-card-neutral text-ink-black cursor-default opacity-80';
         case CardTypeEnum.ASSASSIN:
           return baseStyles + ' bg-card-assassin text-team-red cursor-default';
         default:
-          return baseStyles + ' bg-card-surface text-card-text cursor-default';
+          return baseStyles + ' bg-paper-light text-ink-black cursor-default';
       }
     }
 
-    // Spymaster view - show team indicators with borders
+    // スパイマスター表示 - インクマーク付き
     if (isSpymaster) {
       switch (card.type) {
         case CardTypeEnum.RED:
-          return baseStyles + ' bg-card-surface text-card-text ring-4 ring-team-red/60 ring-inset shadow-card cursor-default';
+          return baseStyles + ' bg-paper-light text-ink-black ring-4 ring-inset ring-team-red shadow-paper cursor-default';
         case CardTypeEnum.BLUE:
-          return baseStyles + ' bg-card-surface text-card-text ring-4 ring-team-blue/60 ring-inset shadow-card cursor-default';
+          return baseStyles + ' bg-paper-light text-ink-black ring-4 ring-inset ring-team-blue shadow-paper cursor-default';
         case CardTypeEnum.NEUTRAL:
-          return baseStyles + ' bg-card-surface text-card-text ring-4 ring-game-muted/40 ring-inset shadow-card cursor-default';
+          return baseStyles + ' bg-paper-aged text-ink-gray shadow-paper cursor-default';
         case CardTypeEnum.ASSASSIN:
-          return baseStyles + ' bg-card-surface text-card-text ring-4 ring-card-assassin ring-inset shadow-card cursor-default';
+          return baseStyles + ' bg-paper-light text-ink-black ring-4 ring-inset ring-ink-black shadow-paper cursor-default';
         default:
-          return baseStyles + ' bg-card-surface text-card-text shadow-card cursor-default';
+          return baseStyles + ' bg-paper-light text-ink-black shadow-paper cursor-default';
       }
     }
 
-    // Disabled (not your turn)
+    // 無効（自分のターンではない）
     if (disabled) {
-      return baseStyles + ' bg-card-surface text-game-muted shadow-card cursor-not-allowed opacity-60';
+      return baseStyles + ' bg-paper-aged text-ink-light shadow-paper cursor-not-allowed opacity-60';
     }
 
-    // Interactive card - UX guideline: hover feedback + cursor-pointer
-    return baseStyles + ' bg-card-surface text-card-text shadow-card hover:shadow-card-hover hover:scale-[1.03] active:scale-[0.98] cursor-pointer';
+    // インタラクティブカード - 紙のホバー効果
+    return baseStyles + ' bg-paper-light text-ink-black shadow-paper hover:shadow-paper-hover hover:bg-paper-cream active:translate-x-[1px] active:translate-y-[1px] active:shadow-paper cursor-pointer';
   };
 
-  // Type indicator for spymaster
+  // スパイマスター用タイプインジケーター（インクドット）
   const getIndicatorColor = () => {
     switch (card.type) {
       case CardTypeEnum.RED: return 'bg-team-red';
       case CardTypeEnum.BLUE: return 'bg-team-blue';
-      case CardTypeEnum.NEUTRAL: return 'bg-game-muted';
-      case CardTypeEnum.ASSASSIN: return 'bg-card-assassin ring-2 ring-team-red/50';
-      default: return 'bg-game-muted';
+      case CardTypeEnum.NEUTRAL: return 'bg-ink-light';
+      case CardTypeEnum.ASSASSIN: return 'bg-ink-black';
+      default: return 'bg-ink-light';
     }
   };
 
@@ -71,21 +71,19 @@ export default function GameCard({ card, isSpymaster, onSelect, disabled }: Game
       className={getCardStyles()}
       aria-label={card.word + (card.isRevealed ? ' (revealed)' : '')}
     >
-      <span className="text-center break-words leading-tight select-none">
+      <span className="text-center break-words leading-tight select-none uppercase tracking-wide">
         {card.word}
       </span>
 
-      {/* Spymaster type indicator */}
+      {/* スパイマスター用インクドット */}
       {isSpymaster && !card.isRevealed && (
-        <div className={'absolute top-2 right-2 w-3 h-3 rounded-full ' + getIndicatorColor()} />
+        <div className={'absolute top-2 right-2 w-3 h-3 rounded-full border-2 border-ink-black ' + getIndicatorColor()} />
       )}
 
-      {/* Revealed check mark */}
+      {/* 公開済みスタンプ */}
       {card.isRevealed && (
-        <div className="absolute bottom-2 right-2">
-          <svg className="w-5 h-5 text-white/60" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
+        <div className="absolute bottom-1 right-1 text-xs font-typewriter opacity-60">
+          ✓
         </div>
       )}
     </button>

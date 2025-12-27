@@ -7,48 +7,46 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Tokyo Night inspired - warm, readable, NOT AI-looking
-        game: {
-          bg: '#1a1b26',         // Warm dark background
-          surface: '#24283b',    // Slightly lighter
-          border: '#414868',     // Muted purple-blue
-          accent: '#9ece6a',     // Success green
-          muted: '#565f89',      // Muted text
+        // 新聞/紙風 - Newspaper/Paper Style
+        paper: {
+          cream: '#f5f0e1',      // メイン背景（古い紙）
+          light: '#fff8e7',      // カード背景（明るい紙）
+          aged: '#e8e0c8',       // エイジド紙
+          border: '#2c2c2c',     // インクボーダー
+        },
+        ink: {
+          black: '#1a1a1a',      // メインテキスト
+          gray: '#4a4a4a',       // サブテキスト
+          light: '#6b6b6b',      // ミュートテキスト
+          red: '#c41e3a',        // 赤インク（チーム赤）
+          blue: '#1e3a5f',       // 青インク（チーム青）
+          sepia: '#704214',      // セピア
         },
         team: {
-          red: '#f7768e',        // Soft rose
-          'red-dark': '#db4b6e',
-          'red-light': '#ffb3c1',
-          blue: '#7aa2f7',       // Soft blue
-          'blue-dark': '#5a7fd4',
-          'blue-light': '#b4c8ff',
+          red: '#c41e3a',        // クラシック赤インク
+          'red-light': '#e85d75',
+          'red-bg': '#fce8ec',   // 赤チーム背景
+          blue: '#1e3a5f',       // クラシック青インク
+          'blue-light': '#4a6fa5',
+          'blue-bg': '#e8f0fc',  // 青チーム背景
         },
         card: {
-          base: '#c0caf5',       // Light lavender for cards
-          surface: '#e0e7ff',    // Warmer white
-          text: '#1a1b26',       // Dark text on light cards
-          neutral: '#9aa5ce',    // Neutral card
-          assassin: '#1a1b26',   // Dark assassin
+          neutral: '#d4cdb7',    // ニュートラル（古い紙）
+          assassin: '#1a1a1a',   // 暗殺者（黒インク）
         },
       },
       fontFamily: {
-        // Playful Creative from ui-ux-pro-max
-        heading: ['Fredoka', 'sans-serif'],
-        body: ['Nunito', 'sans-serif'],
-      },
-      borderRadius: {
-        'card': '1rem',
+        // タイプライター風フォント
+        typewriter: ["'Special Elite'", 'Courier New', 'monospace'],
+        serif: ["'Playfair Display'", 'Georgia', 'serif'],
       },
       boxShadow: {
-        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.15)',
-        'glow-red': '0 0 20px rgba(247, 118, 142, 0.4)',
-        'glow-blue': '0 0 20px rgba(122, 162, 247, 0.4)',
+        'paper': '2px 2px 0 #2c2c2c',
+        'paper-hover': '4px 4px 0 #2c2c2c',
+        'inset-paper': 'inset 0 0 10px rgba(0,0,0,0.1)',
       },
-      transitionDuration: {
-        // Flat Design: 150-200ms
-        'fast': '150ms',
-        'normal': '200ms',
+      borderWidth: {
+        '3': '3px',
       },
     },
   },
