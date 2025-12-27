@@ -11,21 +11,21 @@
 }
 
 @layer components {
-  /* Modern button styles */
+  /* Modern button styles with purple accent */
   .btn-primary {
-    @apply px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium
-           hover:bg-indigo-500 active:bg-indigo-700
+    @apply px-5 py-2.5 bg-game-accent text-white rounded-lg font-medium
+           hover:bg-violet-600 active:bg-violet-800
            transition-all duration-200 
-           disabled:bg-slate-600 disabled:cursor-not-allowed
-           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-game-bg;
+           disabled:bg-gray-600 disabled:cursor-not-allowed
+           focus:outline-none focus:ring-2 focus:ring-game-accent focus:ring-offset-2 focus:ring-offset-game-bg;
   }
 
   .btn-secondary {
     @apply px-5 py-2.5 bg-game-surface text-slate-200 rounded-lg font-medium
            border border-game-border
-           hover:bg-slate-700 hover:border-slate-600 active:bg-slate-800
+           hover:bg-card-hover hover:border-game-accent/30 active:bg-game-surface
            transition-all duration-200
-           focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-game-bg;
+           focus:outline-none focus:ring-2 focus:ring-game-accent/50 focus:ring-offset-2 focus:ring-offset-game-bg;
   }
 
   .btn-danger {
@@ -42,9 +42,9 @@
 
   /* Form elements */
   .input-field {
-    @apply w-full px-4 py-2.5 bg-slate-800 border border-game-border rounded-lg
+    @apply w-full px-4 py-2.5 bg-game-surface border border-game-border rounded-lg
            text-slate-100 placeholder-slate-500
-           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+           focus:outline-none focus:ring-2 focus:ring-game-accent/50 focus:border-game-accent/50
            transition-all duration-200;
   }
 
@@ -71,16 +71,16 @@
   }
 
   .score-badge-red {
-    @apply bg-team-red/20 text-team-red-light border border-team-red/30;
+    @apply bg-team-red/15 text-team-red-light border border-team-red/25;
   }
 
   .score-badge-blue {
-    @apply bg-team-blue/20 text-team-blue-light border border-team-blue/30;
+    @apply bg-team-blue/15 text-team-blue-light border border-team-blue/25;
   }
 
   /* Player panel */
   .player-panel {
-    @apply bg-game-surface/50 backdrop-blur rounded-xl border border-game-border p-4;
+    @apply bg-game-surface/80 backdrop-blur rounded-xl border border-game-border p-4;
   }
 
   .player-item {
@@ -101,17 +101,17 @@
   }
 
   .role-badge-spymaster {
-    @apply bg-amber-500/20 text-amber-400 border border-amber-500/30;
+    @apply bg-amber-500/20 text-amber-300 border border-amber-500/30;
   }
 
   .role-badge-operative {
-    @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+    @apply bg-emerald-500/20 text-emerald-300 border border-emerald-500/30;
   }
 
   /* Hint display */
   .hint-display {
-    @apply bg-gradient-to-r from-indigo-500/20 to-violet-500/20 
-           border border-indigo-500/30 rounded-xl p-4;
+    @apply bg-gradient-to-r from-game-accent/15 to-violet-600/15 
+           border border-game-accent/25 rounded-xl p-4;
   }
 }
 

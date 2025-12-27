@@ -289,7 +289,7 @@ export default function GamePage() {
       <div className="max-w-[1600px] mx-auto"><div className="flex gap-6"><div className="hidden lg:block w-64 flex-shrink-0"><PlayerPanel players={players} currentTurn={currentTurn} /></div><div className="flex-1 min-w-0">
         {/* ヘッダー */}
         <div className="mb-4 flex items-center justify-between">
-          <Link to={`/room/${code}`} className="text-indigo-400 hover:underline text-sm">
+          <Link to={`/room/${code}`} className="text-violet-400 hover:text-violet-300 hover:underline transition-colors text-sm">
             ロビーに戻る
           </Link>
           <button onClick={loadGameData} className="btn-secondary text-sm px-3 py-1">
@@ -336,7 +336,7 @@ export default function GamePage() {
 
         {/* ヒント表示 */}
         {latestHint && (
-          <div className="card mb-4 hint-display border-2 border-indigo-500/30">
+          <div className="card mb-4 hint-display ">
             <p className="text-lg font-bold">
                Hint: "{latestHint.word}" {latestHint.count}
             </p>
@@ -348,7 +348,7 @@ export default function GamePage() {
 
         {/* ヒント入力（スパイマスター用） */}
         {canGiveHint && (
-          <div className="card mb-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-2 border-amber-500/30">
+          <div className="card mb-4 bg-gradient-to-r from-violet-600/15 to-purple-600/15 border border-violet-500/25">
             <h3 className="font-bold mb-2">Give a Hint</h3>
             <div className="flex gap-2">
               <input
@@ -395,7 +395,7 @@ export default function GamePage() {
 
         {/* ターンパスボタン */}
         {canSelectCard && (
-          <div className="card bg-gradient-to-r from-slate-700/50 to-slate-600/50 border-2 border-slate-600">
+          <div className="card bg-gradient-to-r from-game-surface to-card-default border border-game-border">
             <button
               onClick={handlePassTurn}
               className="btn-secondary w-full text-lg py-3"
