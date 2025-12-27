@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getRoomByCode } from '@/services/roomService';
-import { startGame, giveHint, revealCard, passTurn, getGameData } from '@/services/gameService';
+import { giveHint, revealCard, passTurn, getGameData } from '@/services/gameService';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { useGameStore } from '@/stores/gameStore';
-import { Team, PlayerRole, RoomStatus } from '@/types';
+import { Team, PlayerRole, RoomStatus, Player } from '@/types';
 import { getTeamCounts } from '@/utils/gameLogic';
 import GameCard from '@/components/game/GameCard';
 import { useRealtime } from '@/hooks/useRealtime';
@@ -15,11 +15,60 @@ import {
   broadcastTurnChanged,
 } from '@/services/realtimeService';
 
+
+function PlayerPanel({ players, currentTurn }: { players: Player[]; currentTurn: Team | null }) {
+  const redPlayers = players.filter(p => p.team === Team.RED);
+  const bluePlayers = players.filter(p => p.team === Team.BLUE);
+  const spectators = players.filter(p => p.team === Team.SPECTATOR);
+
+  const renderPlayer = (player: Player) => (
+    <div key={player.id} className={"player-item " + (player.team === Team.RED ? "player-item-red" : player.team === Team.BLUE ? "player-item-blue" : "")}>
+      <span className="font-medium text-slate-100">{player.nickname}</span>
+      {player.role && (
+        <span className={"role-badge ml-auto " + (player.role === PlayerRole.SPYMASTER ? "role-badge-spymaster" : "role-badge-operative")}>
+          {player.role === PlayerRole.SPYMASTER ? "SM" : "OP"}
+        </span>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="player-panel space-y-4">
+      <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Players</h3>
+      <div className="space-y-1">
+        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.RED ? "text-rose-400" : "text-slate-500")}>
+          <span className="team-dot team-dot-red"></span>
+          <span>Red Team</span>
+          {currentTurn === Team.RED && <span className="text-xs">(Turn)</span>}
+        </div>
+        {redPlayers.length > 0 ? redPlayers.map(renderPlayer) : <div className="text-sm text-slate-600 pl-5">No players</div>}
+      </div>
+      <div className="space-y-1">
+        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.BLUE ? "text-indigo-400" : "text-slate-500")}>
+          <span className="team-dot team-dot-blue"></span>
+          <span>Blue Team</span>
+          {currentTurn === Team.BLUE && <span className="text-xs">(Turn)</span>}
+        </div>
+        {bluePlayers.length > 0 ? bluePlayers.map(renderPlayer) : <div className="text-sm text-slate-600 pl-5">No players</div>}
+      </div>
+      {spectators.length > 0 && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+            <span className="w-3 h-3 rounded-full bg-slate-600"></span>
+            <span>Spectators</span>
+          </div>
+          {spectators.map(player => (<div key={player.id} className="player-item"><span className="text-slate-400">{player.nickname}</span></div>))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GamePage() {
   const { code } = useParams<{ code: string }>();
 
   const currentPlayer = usePlayerStore((state) => state.currentPlayer);
-  const { room, setRoom, setPlayers } = useRoomStore();
+  const { room, setRoom, setPlayers, players } = useRoomStore();
   const { cards, hints, currentTurn, winner, setCards, setHints, setCurrentTurn, setWinner } =
     useGameStore();
 
@@ -77,7 +126,7 @@ export default function GamePage() {
       const roomData = await getRoomByCode(code);
 
       if (!roomData) {
-        console.error('[GamePage] ルームが見つかりません');
+        console.error('[GamePage] Room not found');
         setError('ルームが見つかりません');
         setLoading(false);
         return;
@@ -94,15 +143,9 @@ export default function GamePage() {
       setCurrentTurn(roomData.currentTurn);
       setWinner(roomData.winner);
 
-      // ゲームが開始されていない場合は開始
-      if (roomData.status === RoomStatus.WAITING && currentPlayer?.isHost) {
-        console.log('[GamePage] ゲーム開始処理開始（ホスト）');
-        const newCards = await startGame(roomData.id, roomData.wordPackId);
-        console.log('[GamePage] カード生成完了:', newCards.length);
-        setCards(newCards);
-      } else if (roomData.status === RoomStatus.PLAYING || roomData.status === RoomStatus.FINISHED) {
-        console.log('[GamePage] ゲームデータ取得開始（既存ゲーム）');
-        // ゲームデータ取得
+      // ゲームデータ取得
+      if (roomData.status === RoomStatus.PLAYING || roomData.status === RoomStatus.FINISHED) {
+        console.log('[GamePage] ゲームデータ取得開始');
         const gameData = await getGameData(roomData.id);
         console.log('[GamePage] ゲームデータ取得完了:', {
           cardsCount: gameData.cards.length,
@@ -111,17 +154,18 @@ export default function GamePage() {
         setCards(gameData.cards);
         setHints(gameData.hints);
       } else {
-        console.warn('[GamePage] 想定外のルームステータス:', roomData.status);
+        console.warn('[GamePage] ゲームが開始されていません。ステータス:', roomData.status);
+        setError('Game has not started yet');
       }
     } catch (err) {
       console.error('[GamePage] エラー:', err);
-      setError('ゲームデータの読み込みに失敗しました');
+      setError('Failed to load game data');
     } finally {
       setLoading(false);
     }
   }
 
-  // ヒント送信
+  // ヒントSend
   const handleSubmitHint = async () => {
     if (!currentPlayer || !room || !hintWord.trim() || !code) return;
 
@@ -145,7 +189,7 @@ export default function GamePage() {
       await broadcastHintGiven(code, hint);
     } catch (err) {
       console.error('[GamePage] ヒント送信エラー:', err);
-      setError('ヒントの送信に失敗しました');
+      setError('Failed to send hint');
     } finally {
       setSubmittingHint(false);
     }
@@ -187,7 +231,7 @@ export default function GamePage() {
       });
     } catch (err) {
       console.error('[GamePage] カード選択エラー:', err);
-      setError('カードの選択に失敗しました');
+      setError('Failed to select card');
     }
   };
 
@@ -203,7 +247,7 @@ export default function GamePage() {
       await broadcastTurnChanged(code, nextTurn);
     } catch (err) {
       console.error('[GamePage] ターンパスエラー:', err);
-      setError('ターンのパスに失敗しました');
+      setError('Failed to pass turn');
     }
   };
 
@@ -222,7 +266,7 @@ export default function GamePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">ゲームを読み込み中...</p>
+        <p className="text-slate-400">Loading game...</p>
       </div>
     );
   }
@@ -231,9 +275,9 @@ export default function GamePage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card max-w-md">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-rose-400 mb-4">{error}</p>
           <Link to={`/room/${code}`} className="btn-primary inline-block">
-            ロビーに戻る
+            Back to Lobby
           </Link>
         </div>
       </div>
@@ -241,15 +285,15 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen p-4 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen p-4 lg:p-6">
+      <div className="max-w-[1600px] mx-auto"><div className="flex gap-6"><div className="hidden lg:block w-64 flex-shrink-0"><PlayerPanel players={players} currentTurn={currentTurn} /></div><div className="flex-1 min-w-0">
         {/* ヘッダー */}
         <div className="mb-4 flex items-center justify-between">
-          <Link to={`/room/${code}`} className="text-blue-600 hover:underline text-sm">
-            ← ロビーに戻る
+          <Link to={`/room/${code}`} className="text-indigo-400 hover:underline text-sm">
+            ロビーに戻る
           </Link>
           <button onClick={loadGameData} className="btn-secondary text-sm px-3 py-1">
-            🔄 更新
+            Refresh
           </button>
         </div>
 
@@ -258,25 +302,25 @@ export default function GamePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="text-lg font-bold">
-                🔴 赤: {teamCounts?.red.remaining || 0}/{teamCounts?.red.total || 0}
+                Red: {teamCounts?.red.remaining || 0}/{teamCounts?.red.total || 0}
               </div>
               <div className="text-lg font-bold">
-                🔵 青: {teamCounts?.blue.remaining || 0}/{teamCounts?.blue.total || 0}
+                Blue: {teamCounts?.blue.remaining || 0}/{teamCounts?.blue.total || 0}
               </div>
             </div>
 
             <div className="text-lg font-bold">
               {winner ? (
-                <span className="text-green-600">
-                  🎉 {winner === Team.RED ? '🔴 赤チーム' : '🔵 青チーム'}の勝利！
+                <span className="text-emerald-400">
+                   {winner === Team.RED ? ' Red Team' : ' Blue Team'} Wins!
                 </span>
               ) : (
                 <span>
-                  ターン:{' '}
+                  Turn:{' '}
                   {currentTurn === Team.RED ? (
-                    <span className="text-red-600">🔴 赤チーム</span>
+                    <span className="text-rose-400"> 赤チーム</span>
                   ) : (
-                    <span className="text-blue-600">🔵 青チーム</span>
+                    <span className="text-indigo-400"> 青チーム</span>
                   )}
                 </span>
               )}
@@ -285,33 +329,33 @@ export default function GamePage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded">
             {error}
           </div>
         )}
 
         {/* ヒント表示 */}
         {latestHint && (
-          <div className="card mb-4 bg-blue-50 border-2 border-blue-300">
+          <div className="card mb-4 hint-display border-2 border-indigo-500/30">
             <p className="text-lg font-bold">
-              💡 ヒント: 「{latestHint.word}」 {latestHint.count}
+               Hint: "{latestHint.word}" {latestHint.count}
             </p>
-            <p className="text-sm text-gray-600">
-              by {latestHint.player?.nickname} ({latestHint.team === Team.RED ? '🔴 赤' : '🔵 青'})
+            <p className="text-sm text-slate-400">
+              by {latestHint.player?.nickname} ({latestHint.team === Team.RED ? ' 赤' : ' 青'})
             </p>
           </div>
         )}
 
         {/* ヒント入力（スパイマスター用） */}
         {canGiveHint && (
-          <div className="card mb-4 bg-green-50 border-2 border-green-300">
-            <h3 className="font-bold mb-2">ヒントを出す</h3>
+          <div className="card mb-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-2 border-amber-500/30">
+            <h3 className="font-bold mb-2">Give a Hint</h3>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={hintWord}
                 onChange={(e) => setHintWord(e.target.value)}
-                placeholder="ヒント単語"
+                placeholder="Enter hint word"
                 className="input-field flex-1"
                 maxLength={100}
               />
@@ -351,12 +395,12 @@ export default function GamePage() {
 
         {/* ターンパスボタン */}
         {canSelectCard && (
-          <div className="card bg-yellow-50 border-2 border-yellow-300">
+          <div className="card bg-gradient-to-r from-slate-700/50 to-slate-600/50 border-2 border-slate-600">
             <button
               onClick={handlePassTurn}
               className="btn-secondary w-full text-lg py-3"
             >
-              ターン終了（パス）
+              End Turn (Pass)
             </button>
           </div>
         )}
@@ -364,10 +408,10 @@ export default function GamePage() {
         {/* 観戦者メッセージ */}
         {currentPlayer?.team === Team.SPECTATOR && (
           <div className="card text-center">
-            <p className="text-gray-600">観戦中です</p>
+            <p className="text-slate-400">You are spectating</p>
           </div>
         )}
-      </div>
+      </div></div></div>
     </div>
   );
 }
