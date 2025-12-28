@@ -17,13 +17,13 @@ import {
 
 
 function PlayerPanel({ players, currentTurn }: { players: Player[]; currentTurn: Team | null }) {
-  const redPlayers = players.filter(p => p.team === Team.RED);
-  const bluePlayers = players.filter(p => p.team === Team.BLUE);
+  const redAGENTS = players.filter(p => p.team === Team.RED);
+  const blueAGENTS = players.filter(p => p.team === Team.BLUE);
   const spectators = players.filter(p => p.team === Team.SPECTATOR);
 
   const renderPlayer = (player: Player) => (
     <div key={player.id} className={"player-item " + (player.team === Team.RED ? "player-item-red" : player.team === Team.BLUE ? "player-item-blue" : "")}>
-      <span className="font-medium text-ink-black">{player.nickname}</span>
+      <span className="font-medium text-dossier-cream">{player.nickname}</span>
       {player.role && (
         <span className={"role-badge ml-auto " + (player.role === PlayerRole.SPYMASTER ? "role-badge-spymaster" : "role-badge-operative")}>
           {player.role === PlayerRole.SPYMASTER ? "SM" : "OP"}
@@ -34,30 +34,30 @@ function PlayerPanel({ players, currentTurn }: { players: Player[]; currentTurn:
 
   return (
     <div className="player-panel space-y-4">
-      <h3 className="text-sm font-typewriter font-bold text-ink-gray uppercase tracking-wider">Players</h3>
+      <h3 className="text-sm font-mono font-bold text-neutral-text uppercase tracking-wider">AGENTS</h3>
       <div className="space-y-1">
-        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.RED ? "text-team-red" : "text-ink-gray")}>
+        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.RED ? "text-stamp-red-glow" : "text-neutral-text")}>
           <span className="team-dot team-dot-red"></span>
           <span>Red Team</span>
           {currentTurn === Team.RED && <span className="text-xs">(Turn)</span>}
         </div>
-        {redPlayers.length > 0 ? redPlayers.map(renderPlayer) : <div className="text-sm text-ink-gray pl-5">No players</div>}
+        {redAGENTS.length > 0 ? redAGENTS.map(renderPlayer) : <div className="text-sm text-neutral-text pl-5">No players</div>}
       </div>
       <div className="space-y-1">
-        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.BLUE ? "text-team-blue" : "text-ink-gray")}>
+        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.BLUE ? "text-ink-navy-glow" : "text-neutral-text")}>
           <span className="team-dot team-dot-blue"></span>
           <span>Blue Team</span>
           {currentTurn === Team.BLUE && <span className="text-xs">(Turn)</span>}
         </div>
-        {bluePlayers.length > 0 ? bluePlayers.map(renderPlayer) : <div className="text-sm text-ink-gray pl-5">No players</div>}
+        {blueAGENTS.length > 0 ? blueAGENTS.map(renderPlayer) : <div className="text-sm text-neutral-text pl-5">No players</div>}
       </div>
       {spectators.length > 0 && (
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sm font-medium text-ink-gray">
+          <div className="flex items-center gap-2 text-sm font-medium text-neutral-text">
             <span className="w-3 h-3 rounded-full bg-ink-light"></span>
             <span>Spectators</span>
           </div>
-          {spectators.map(player => (<div key={player.id} className="player-item"><span className="text-ink-gray">{player.nickname}</span></div>))}
+          {spectators.map(player => (<div key={player.id} className="player-item"><span className="text-neutral-text">{player.nickname}</span></div>))}
         </div>
       )}
     </div>
@@ -185,10 +185,10 @@ export default function GamePage() {
       setHintWord('');
       setHintCount(1);
 
-      // Broadcast送信
+      // BroadcastTRANSMIT
       await broadcastHintGiven(code, hint);
     } catch (err) {
-      console.error('[GamePage] ヒント送信エラー:', err);
+      console.error('[GamePage] ヒントTRANSMITエラー:', err);
       setError('Failed to send hint');
     } finally {
       setSubmittingHint(false);
@@ -223,7 +223,7 @@ export default function GamePage() {
         setWinner(result.winner);
       }
 
-      // Broadcast送信
+      // BroadcastTRANSMIT
       await broadcastCardRevealed(code, {
         card: result.card,
         nextTurn: result.nextTurn,
@@ -243,7 +243,7 @@ export default function GamePage() {
       const nextTurn = await passTurn(room.id, currentTurn);
       setCurrentTurn(nextTurn);
 
-      // Broadcast送信
+      // BroadcastTRANSMIT
       await broadcastTurnChanged(code, nextTurn);
     } catch (err) {
       console.error('[GamePage] ターンパスエラー:', err);
@@ -265,8 +265,8 @@ export default function GamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-paper-cream">
-        <p className="text-ink-gray">Loading game...</p>
+      <div className="min-h-screen flex items-center justify-center bg-noir-deep">
+        <p className="text-neutral-text">Decrypting...</p>
       </div>
     );
   }
@@ -275,7 +275,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card max-w-md">
-          <p className="text-team-red mb-4">{error}</p>
+          <p className="text-stamp-red-glow mb-4">{error}</p>
           <Link to={`/room/${code}`} className="btn-primary inline-block">
             Back to Lobby
           </Link>
@@ -285,15 +285,15 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen p-4 lg:p-6 bg-paper-cream">
+    <div className="min-h-screen p-4 lg:p-6 bg-noir-deep">
       <div className="max-w-[1600px] mx-auto"><div className="flex gap-6"><div className="hidden lg:block w-64 flex-shrink-0"><PlayerPanel players={players} currentTurn={currentTurn} /></div><div className="flex-1 min-w-0">
         {/* ヘッダー */}
         <div className="mb-4 flex items-center justify-between">
-          <Link to={`/room/${code}`} className="text-team-blue hover:text-team-blue-light hover:underline transition-colors text-sm">
-            ロビーに戻る
+          <Link to={`/room/${code}`} className="text-ink-navy-glow hover:text-ink-navy-glow-light hover:underline transition-colors text-sm">
+            Back to Briefing
           </Link>
           <button onClick={loadGameData} className="btn-secondary text-sm px-3 py-1">
-            Refresh
+            Refresh Intel
           </button>
         </div>
 
@@ -302,25 +302,25 @@ export default function GamePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="text-lg font-bold">
-                Red: {teamCounts?.red.remaining || 0}/{teamCounts?.red.total || 0}
+                RED: {teamCounts?.red.remaining || 0}/{teamCounts?.red.total || 0}
               </div>
               <div className="text-lg font-bold">
-                Blue: {teamCounts?.blue.remaining || 0}/{teamCounts?.blue.total || 0}
+                BLUE: {teamCounts?.blue.remaining || 0}/{teamCounts?.blue.total || 0}
               </div>
             </div>
 
             <div className="text-lg font-bold">
               {winner ? (
-                <span className="text-ink-black uppercase tracking-wider">
+                <span className="text-dossier-cream uppercase tracking-wider">
                    {winner === Team.RED ? ' Red Team' : ' Blue Team'} Wins!
                 </span>
               ) : (
                 <span>
-                  Turn:{' '}
+                  ACTIVE:{' '}
                   {currentTurn === Team.RED ? (
-                    <span className="text-team-red"> 赤チーム</span>
+                    <span className="text-stamp-red-glow"> RED TEAM</span>
                   ) : (
-                    <span className="text-team-blue"> 青チーム</span>
+                    <span className="text-ink-navy-glow"> BLUE TEAM</span>
                   )}
                 </span>
               )}
@@ -329,7 +329,7 @@ export default function GamePage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-team-red/20 border border-rose-500/30 text-team-red rounded">
+          <div className="mb-4 p-3 bg-stamp-red-bg border border-rose-500/30 text-stamp-red-glow rounded">
             {error}
           </div>
         )}
@@ -338,24 +338,24 @@ export default function GamePage() {
         {latestHint && (
           <div className="card mb-4 hint-display ">
             <p className="text-lg font-bold">
-               Hint: "{latestHint.word}" {latestHint.count}
+               TRANSMISSION: "{latestHint.word}" {latestHint.count}
             </p>
-            <p className="text-sm text-ink-gray">
-              by {latestHint.player?.nickname} ({latestHint.team === Team.RED ? ' 赤' : ' 青'})
+            <p className="text-sm text-neutral-text">
+              by {latestHint.player?.nickname} ({latestHint.team === Team.RED ? ' RED' : ' BLUE'})
             </p>
           </div>
         )}
 
         {/* ヒント入力（スパイマスター用） */}
         {canGiveHint && (
-          <div className="card mb-4 bg-gradient-to-r bg-paper-aged">
-            <h3 className="font-bold mb-2">Give a Hint</h3>
+          <div className="card mb-4 bg-gradient-to-r bg-noir-leather">
+            <h3 className="font-bold mb-2">Transmit Code</h3>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={hintWord}
                 onChange={(e) => setHintWord(e.target.value)}
-                placeholder="Enter hint word"
+                placeholder="Enter codeword..."
                 className="input-field flex-1"
                 maxLength={100}
               />
@@ -372,7 +372,7 @@ export default function GamePage() {
                 disabled={!hintWord.trim() || submittingHint}
                 className="btn-primary px-6"
               >
-                送信
+                TRANSMIT
               </button>
             </div>
           </div>
@@ -395,12 +395,12 @@ export default function GamePage() {
 
         {/* ターンパスボタン */}
         {canSelectCard && (
-          <div className="card bg-gradient-to-r bg-paper-light">
+          <div className="card bg-gradient-to-r bg-noir-smoke">
             <button
               onClick={handlePassTurn}
               className="btn-secondary w-full text-lg py-3"
             >
-              End Turn (Pass)
+              END TRANSMISSION (PASS)
             </button>
           </div>
         )}
@@ -408,7 +408,7 @@ export default function GamePage() {
         {/* 観戦者メッセージ */}
         {currentPlayer?.team === Team.SPECTATOR && (
           <div className="card text-center">
-            <p className="text-ink-gray">You are spectating</p>
+            <p className="text-neutral-text">Observation Mode Active</p>
           </div>
         )}
       </div></div></div>

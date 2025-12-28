@@ -1,5 +1,5 @@
-/* 新聞/タイプライター風フォント */
-@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Playfair+Display:wght@400;600;700&display=swap');
+/* スパイ・ノワール - Cold War Espionage Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600;700&family=Permanent+Marker&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,123 +7,206 @@
 
 @layer base {
   body {
-    @apply bg-paper-cream text-ink-black font-typewriter antialiased;
-    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    @apply bg-noir-deep text-dossier-cream font-mono antialiased;
+    background-image: 
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse at 20% 30%, rgba(26, 54, 93, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(139, 0, 0, 0.1) 0%, transparent 50%);
   }
   
   h1, h2, h3, h4 {
-    @apply font-serif font-bold;
+    @apply font-display font-normal tracking-wider uppercase;
+  }
+
+  /* カスタムスクロールバー - ダーク */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-noir-smoke;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-noir-shadow rounded;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-brass-tarnish;
   }
 }
 
 @layer components {
-  /* 新聞風ボタン - 黒インクボーダー */
+  /* プライマリボタン - 真鍮/ゴールドアクセント */
   .btn-primary {
-    @apply px-6 py-3 bg-ink-black text-paper-cream font-typewriter font-bold uppercase tracking-wider
-           border-3 border-ink-black
-           hover:bg-paper-cream hover:text-ink-black
-           transition-all duration-150 cursor-pointer
-           shadow-paper hover:shadow-paper-hover;
+    @apply px-6 py-3 bg-brass-gold text-noir-deep font-display text-lg tracking-widest uppercase
+           border-2 border-brass-tarnish
+           hover:bg-brass-shine hover:border-brass-gold
+           active:translate-y-[1px]
+           transition-all duration-200 cursor-pointer
+           shadow-dossier hover:shadow-dossier-hover;
   }
 
+  /* セカンダリボタン - マニラフォルダ風 */
   .btn-secondary {
-    @apply px-6 py-3 bg-paper-light text-ink-black font-typewriter font-bold uppercase tracking-wider
-           border-3 border-ink-black
-           hover:bg-paper-aged
-           transition-all duration-150 cursor-pointer
-           shadow-paper hover:shadow-paper-hover;
+    @apply px-6 py-3 bg-dossier-manila text-noir-leather font-mono font-semibold uppercase tracking-wider
+           border-2 border-noir-shadow
+           hover:bg-dossier-aged hover:border-noir-leather
+           active:translate-y-[1px]
+           transition-all duration-200 cursor-pointer
+           shadow-dossier;
   }
 
+  /* 危険ボタン - 極秘スタンプ風 */
   .btn-danger {
-    @apply px-6 py-3 bg-team-red text-paper-cream font-typewriter font-bold uppercase tracking-wider
-           border-3 border-ink-black
-           hover:bg-team-red-light
-           transition-all duration-150 cursor-pointer
-           shadow-paper;
+    @apply px-6 py-3 bg-stamp-red text-dossier-cream font-display text-lg tracking-widest uppercase
+           border-2 border-stamp-red-glow
+           hover:bg-stamp-red-glow
+           active:translate-y-[1px]
+           transition-all duration-200 cursor-pointer
+           shadow-stamp;
   }
 
-  /* カードコンテナ - 古い紙風 */
+  /* カードコンテナ - 機密書類風 */
   .card {
-    @apply bg-paper-light border-3 border-ink-black p-6 shadow-paper;
+    @apply bg-noir-smoke border border-noir-shadow p-6 shadow-dossier;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='0.03'/%3E%3C/svg%3E");
   }
 
-  /* フォーム要素 */
+  /* フォーム要素 - タイプライター風 */
   .input-field {
-    @apply w-full px-4 py-3 bg-paper-cream border-3 border-ink-black
-           text-ink-black placeholder-ink-light font-typewriter
-           focus:outline-none focus:bg-paper-light
-           transition-all duration-150;
+    @apply w-full px-4 py-3 bg-noir-leather border-2 border-noir-shadow
+           text-dossier-cream placeholder-neutral-text font-mono
+           focus:outline-none focus:border-brass-gold focus:ring-1 focus:ring-brass-gold/30
+           transition-all duration-200;
   }
 
   .label {
-    @apply block text-sm font-typewriter font-bold text-ink-black mb-2 uppercase tracking-wider;
+    @apply block text-sm font-mono font-semibold text-brass-gold mb-2 uppercase tracking-widest;
   }
 
-  /* チームドット */
+  /* チームドット - 発光効果 */
   .team-dot {
-    @apply w-3 h-3 rounded-full inline-block border-2 border-ink-black;
+    @apply w-3 h-3 rounded-full inline-block;
+    box-shadow: 0 0 8px currentColor;
   }
 
   .team-dot-red {
-    @apply bg-team-red;
+    @apply bg-stamp-red text-stamp-red;
   }
 
   .team-dot-blue {
-    @apply bg-team-blue;
+    @apply bg-ink-navy text-ink-navy;
   }
 
-  /* スコアバッジ - 新聞見出し風 */
+  /* スコアバッジ - 機密レベル風 */
   .score-badge {
-    @apply inline-flex items-center gap-2 px-4 py-2 font-serif font-bold text-lg border-3 border-ink-black;
+    @apply inline-flex items-center gap-2 px-4 py-2 font-display text-2xl tracking-wider uppercase;
   }
 
   .score-badge-red {
-    @apply bg-team-red-bg text-team-red;
+    @apply bg-stamp-red-bg text-stamp-red-glow border-l-4 border-stamp-red;
   }
 
   .score-badge-blue {
-    @apply bg-team-blue-bg text-team-blue;
+    @apply bg-ink-navy-bg text-ink-navy-glow border-l-4 border-ink-navy;
   }
 
-  /* プレイヤーパネル */
+  /* プレイヤーパネル - ドシエ（書類ファイル）風 */
   .player-panel {
-    @apply bg-paper-aged border-3 border-ink-black p-5 shadow-paper;
+    @apply bg-noir-leather border border-noir-shadow p-5 shadow-dossier;
+    background-image: 
+      linear-gradient(135deg, transparent 0%, rgba(201,162,39,0.03) 100%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='0.04'/%3E%3C/svg%3E");
   }
 
   .player-item {
-    @apply flex items-center gap-3 px-3 py-2 transition-colors duration-150;
+    @apply flex items-center gap-3 px-3 py-2 transition-all duration-200 rounded;
   }
 
   .player-item-red {
-    @apply bg-team-red-bg border-l-4 border-team-red;
+    @apply bg-stamp-red-bg/50 border-l-3 border-stamp-red;
   }
 
   .player-item-blue {
-    @apply bg-team-blue-bg border-l-4 border-team-blue;
+    @apply bg-ink-navy-bg/50 border-l-3 border-ink-navy;
   }
 
-  /* 役割バッジ - タイプライター風 */
+  /* 役割バッジ - IDバッジ風 */
   .role-badge {
-    @apply text-xs px-2 py-1 font-typewriter font-bold uppercase tracking-wider border-2 border-ink-black;
+    @apply text-xs px-2 py-1 font-mono font-bold uppercase tracking-wider;
   }
 
   .role-badge-spymaster {
-    @apply bg-ink-black text-paper-cream;
+    @apply bg-brass-gold text-noir-deep border border-brass-tarnish;
   }
 
   .role-badge-operative {
-    @apply bg-paper-light text-ink-black;
+    @apply bg-noir-shadow text-dossier-manila border border-noir-leather;
   }
 
-  /* ヒント表示 - 新聞の見出し風 */
+  /* ヒント表示 - 暗号通信風 */
   .hint-display {
-    @apply bg-paper-cream border-3 border-ink-black p-5 shadow-paper;
+    @apply bg-noir-leather border-2 border-brass-gold/30 p-5;
+    background-image: 
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 20px,
+        rgba(201,162,39,0.03) 20px,
+        rgba(201,162,39,0.03) 21px
+      );
+  }
+
+  /* TOP SECRET スタンプ効果 */
+  .stamp-classified {
+    @apply inline-block font-display text-stamp-red uppercase tracking-widest
+           border-3 border-stamp-red px-4 py-1
+           rotate-[-3deg] opacity-90;
+    text-shadow: 0 0 10px rgba(139,0,0,0.5);
+  }
+
+  /* 勝利スタンプ */
+  .stamp-victory {
+    @apply font-display uppercase tracking-widest text-4xl
+           animate-stamp-appear;
+  }
+
+  .stamp-victory-red {
+    @apply text-stamp-red;
+    text-shadow: 0 0 20px rgba(139,0,0,0.8), 0 0 40px rgba(139,0,0,0.4);
+  }
+
+  .stamp-victory-blue {
+    @apply text-ink-navy-glow;
+    text-shadow: 0 0 20px rgba(45,90,158,0.8), 0 0 40px rgba(45,90,158,0.4);
   }
 }
 
-/* 紙のテクスチャ感 */
-.paper-texture {
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='0.05'/%3E%3C/svg%3E");
+/* フィルムグレイン オーバーレイ */
+.film-grain::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E");
+  z-index: 9999;
+  opacity: 0.4;
+  animation: flicker 3s infinite;
+}
+
+/* テキストの発光効果 */
+.text-glow-gold {
+  text-shadow: 0 0 10px rgba(201,162,39,0.5), 0 0 20px rgba(201,162,39,0.3);
+}
+
+.text-glow-red {
+  text-shadow: 0 0 10px rgba(139,0,0,0.5), 0 0 20px rgba(139,0,0,0.3);
+}
+
+.text-glow-blue {
+  text-shadow: 0 0 10px rgba(26,54,93,0.5), 0 0 20px rgba(26,54,93,0.3);
 }
 
 /* Reduced motion */
@@ -131,5 +214,8 @@
   * {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+  .film-grain::before {
+    animation: none;
   }
 }
