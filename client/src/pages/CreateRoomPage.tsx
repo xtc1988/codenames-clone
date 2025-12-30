@@ -6,6 +6,8 @@ import { useRoomStore } from '@/stores/roomStore';
 import { WordPack } from '@/types';
 
 export default function CreateRoomPage() {
+  console.log('[CreateRoomPage] コンポーネント初期化');
+
   const navigate = useNavigate();
   const setCurrentPlayer = usePlayerStore((state) => state.setCurrentPlayer);
   const setRoom = useRoomStore((state) => state.setRoom);
@@ -22,13 +24,21 @@ export default function CreateRoomPage() {
 
   // 単語パック一覧取得
   useEffect(() => {
+    console.log('[CreateRoomPage] useEffect開始');
     async function loadWordPacks() {
-      const packs = await getWordPacks();
-      setWordPacks(packs);
-      // デフォルトパックを選択
-      const defaultPack = packs.find((p) => p.isDefault);
-      if (defaultPack) {
-        setWordPackId(defaultPack.id);
+      try {
+        console.log('[CreateRoomPage] getWordPacks呼び出し');
+        const packs = await getWordPacks();
+        console.log('[CreateRoomPage] getWordPacks結果:', packs.length, '件');
+        setWordPacks(packs);
+        // デフォルトパックを選択
+        const defaultPack = packs.find((p) => p.isDefault);
+        if (defaultPack) {
+          console.log('[CreateRoomPage] デフォルトパック選択:', defaultPack.name);
+          setWordPackId(defaultPack.id);
+        }
+      } catch (error) {
+        console.error('[CreateRoomPage] エラー:', error);
       }
     }
     loadWordPacks();

@@ -67,11 +67,11 @@ export interface Database {
           id: string;
           code: string;
           name: string;
-          status: 'WAITING' | 'PLAYING' | 'FINISHED';
+          status: 'waiting' | 'playing' | 'finished';
           is_public: boolean;
           word_pack_id: string;
-          current_turn: 'RED' | 'BLUE' | null;
-          winner: 'RED' | 'BLUE' | null;
+          current_turn: 'red' | 'blue' | null;
+          winner: 'red' | 'blue' | null;
           timer_seconds: number | null;
           created_at: string;
           updated_at: string;
@@ -80,11 +80,11 @@ export interface Database {
           id?: string;
           code: string;
           name: string;
-          status?: 'WAITING' | 'PLAYING' | 'FINISHED';
+          status?: 'waiting' | 'playing' | 'finished';
           is_public?: boolean;
           word_pack_id: string;
-          current_turn?: 'RED' | 'BLUE' | null;
-          winner?: 'RED' | 'BLUE' | null;
+          current_turn?: 'red' | 'blue' | null;
+          winner?: 'red' | 'blue' | null;
           timer_seconds?: number | null;
           created_at?: string;
           updated_at?: string;
@@ -93,11 +93,11 @@ export interface Database {
           id?: string;
           code?: string;
           name?: string;
-          status?: 'WAITING' | 'PLAYING' | 'FINISHED';
+          status?: 'waiting' | 'playing' | 'finished';
           is_public?: boolean;
           word_pack_id?: string;
-          current_turn?: 'RED' | 'BLUE' | null;
-          winner?: 'RED' | 'BLUE' | null;
+          current_turn?: 'red' | 'blue' | null;
+          winner?: 'red' | 'blue' | null;
           timer_seconds?: number | null;
           created_at?: string;
           updated_at?: string;
@@ -108,33 +108,33 @@ export interface Database {
           id: string;
           room_id: string;
           nickname: string;
-          team: 'RED' | 'BLUE' | 'SPECTATOR';
-          role: 'SPYMASTER' | 'OPERATIVE' | null;
+          team: 'red' | 'blue' | 'spectator';
+          role: 'spymaster' | 'operative' | null;
           session_id: string;
           is_host: boolean;
-          spectator_view: 'SPYMASTER' | 'OPERATIVE';
+          spectator_view: 'spymaster' | 'operative';
           created_at: string;
         };
         Insert: {
           id?: string;
           room_id: string;
           nickname: string;
-          team?: 'RED' | 'BLUE' | 'SPECTATOR';
-          role?: 'SPYMASTER' | 'OPERATIVE' | null;
+          team?: 'red' | 'blue' | 'spectator';
+          role?: 'spymaster' | 'operative' | null;
           session_id: string;
           is_host?: boolean;
-          spectator_view?: 'SPYMASTER' | 'OPERATIVE';
+          spectator_view?: 'spymaster' | 'operative';
           created_at?: string;
         };
         Update: {
           id?: string;
           room_id?: string;
           nickname?: string;
-          team?: 'RED' | 'BLUE' | 'SPECTATOR';
-          role?: 'SPYMASTER' | 'OPERATIVE' | null;
+          team?: 'red' | 'blue' | 'spectator';
+          role?: 'spymaster' | 'operative' | null;
           session_id?: string;
           is_host?: boolean;
-          spectator_view?: 'SPYMASTER' | 'OPERATIVE';
+          spectator_view?: 'spymaster' | 'operative';
           created_at?: string;
         };
       };
@@ -144,7 +144,7 @@ export interface Database {
           room_id: string;
           word: string;
           position: number;
-          type: 'RED' | 'BLUE' | 'NEUTRAL' | 'ASSASSIN';
+          type: 'red' | 'blue' | 'neutral' | 'assassin';
           is_revealed: boolean;
           revealed_by: string | null;
         };
@@ -153,7 +153,7 @@ export interface Database {
           room_id: string;
           word: string;
           position: number;
-          type: 'RED' | 'BLUE' | 'NEUTRAL' | 'ASSASSIN';
+          type: 'red' | 'blue' | 'neutral' | 'assassin';
           is_revealed?: boolean;
           revealed_by?: string | null;
         };
@@ -162,7 +162,7 @@ export interface Database {
           room_id?: string;
           word?: string;
           position?: number;
-          type?: 'RED' | 'BLUE' | 'NEUTRAL' | 'ASSASSIN';
+          type?: 'red' | 'blue' | 'neutral' | 'assassin';
           is_revealed?: boolean;
           revealed_by?: string | null;
         };
@@ -174,7 +174,7 @@ export interface Database {
           player_id: string;
           word: string;
           count: number;
-          team: 'RED' | 'BLUE';
+          team: 'red' | 'blue';
           created_at: string;
         };
         Insert: {
@@ -183,7 +183,7 @@ export interface Database {
           player_id: string;
           word: string;
           count: number;
-          team: 'RED' | 'BLUE';
+          team: 'red' | 'blue';
           created_at?: string;
         };
         Update: {
@@ -192,7 +192,7 @@ export interface Database {
           player_id?: string;
           word?: string;
           count?: number;
-          team?: 'RED' | 'BLUE';
+          team?: 'red' | 'blue';
           created_at?: string;
         };
       };

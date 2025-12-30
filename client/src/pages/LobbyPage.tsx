@@ -165,12 +165,18 @@ export default function LobbyPage() {
   };
 
   const handleStartGame = async () => {
-    if (!canStartGame() || !code) {
+    if (!canStartGame() || !code || !room) {
       setError('ゲームを開始できません。各チームに1人以上のプレイヤーとスパイマスターが必要です。');
       return;
     }
 
     try {
+      // ホストがカードを生成してゲームを開始
+      console.log('[LobbyPage] ゲーム開始処理開始（ホスト）');
+      const { startGame } = await import('@/services/gameService');
+      await startGame(room.id, room.wordPackId);
+      console.log('[LobbyPage] カード生成完了');
+
       // ゲーム開始通知をBroadcast
       await broadcast('game_started', {
         roomCode: code,
@@ -198,7 +204,7 @@ export default function LobbyPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">読み込み中...</p>
+        <p className="text-neutral-muted">読み込み中...</p>
       </div>
     );
   }
@@ -207,7 +213,7 @@ export default function LobbyPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card max-w-md">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-team-berry mb-4">{error}</p>
           <Link to="/" className="btn-primary inline-block">
             トップに戻る
           </Link>
@@ -217,17 +223,17 @@ export default function LobbyPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 bg-gray-50">
+    <div className="min-h-screen p-4 bg-forest-bg">
       <div className="max-w-6xl mx-auto">
         {/* ヘッダー */}
         <div className="mb-6 flex items-center justify-between">
-          <Link to="/" className="text-blue-600 hover:underline text-sm">
+          <Link to="/" className="text-team-sky hover:underline text-sm">
             ← トップに戻る
           </Link>
           <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-neutral-muted">
               ルームコード:
-              <span className="ml-2 px-3 py-1 bg-blue-100 text-blue-800 font-mono rounded">
+              <span className="ml-2 px-3 py-1 bg-team-sky/20 text-team-sky-dark font-mono rounded">
                 {room?.code}
               </span>
             </div>
@@ -238,12 +244,12 @@ export default function LobbyPage() {
         </div>
 
         <h1 className="text-3xl font-bold mb-2">{room?.name}</h1>
-        <p className="text-gray-600 mb-6">
+        <p className="text-neutral-muted mb-6">
           単語パック: {room?.wordPack?.name || '読み込み中...'}
         </p>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-team-berry/10 border border-team-berry/30 text-team-berry rounded">
             {error}
           </div>
         )}
@@ -251,19 +257,19 @@ export default function LobbyPage() {
         {/* チーム選択 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* 赤チーム */}
-          <div className="card bg-red-50 border-2 border-red-300">
-            <h2 className="text-xl font-bold text-red-700 mb-4">🔴 赤チーム</h2>
+          <div className="card bg-team-berry/10 border-2 border-team-berry/30">
+            <h2 className="text-xl font-bold text-team-berry mb-4">🔴 赤チーム</h2>
 
             {/* スパイマスター */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-gray-700 mb-2">👑 スパイマスター</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">👑 スパイマスター</h3>
               {redSpymaster ? (
-                <div className="p-2 bg-white rounded border border-red-200">
+                <div className="p-2 bg-white rounded border border-team-berry/20">
                   {redSpymaster.nickname}
                   {redSpymaster.id === currentPlayer?.id && ' (あなた)'}
                 </div>
               ) : (
-                <div className="p-2 bg-gray-100 rounded text-gray-500 text-sm">
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
                   (空き)
                 </div>
               )}
@@ -271,18 +277,18 @@ export default function LobbyPage() {
 
             {/* オペレーティブ */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-gray-700 mb-2">🔍 オペレーティブ</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">🔍 オペレーティブ</h3>
               {redOperatives.length > 0 ? (
                 <div className="space-y-1">
                   {redOperatives.map((p) => (
-                    <div key={p.id} className="p-2 bg-white rounded border border-red-200 text-sm">
+                    <div key={p.id} className="p-2 bg-white rounded border border-team-berry/20 text-sm">
                       {p.nickname}
                       {p.id === currentPlayer?.id && ' (あなた)'}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-2 bg-gray-100 rounded text-gray-500 text-sm">
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
                   (なし)
                 </div>
               )}
@@ -309,19 +315,19 @@ export default function LobbyPage() {
           </div>
 
           {/* 青チーム */}
-          <div className="card bg-blue-50 border-2 border-blue-300">
-            <h2 className="text-xl font-bold text-blue-700 mb-4">🔵 青チーム</h2>
+          <div className="card bg-team-sky/10 border-2 border-team-sky/30">
+            <h2 className="text-xl font-bold text-team-sky mb-4">🔵 青チーム</h2>
 
             {/* スパイマスター */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-gray-700 mb-2">👑 スパイマスター</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">👑 スパイマスター</h3>
               {blueSpymaster ? (
-                <div className="p-2 bg-white rounded border border-blue-200">
+                <div className="p-2 bg-white rounded border border-team-sky/20">
                   {blueSpymaster.nickname}
                   {blueSpymaster.id === currentPlayer?.id && ' (あなた)'}
                 </div>
               ) : (
-                <div className="p-2 bg-gray-100 rounded text-gray-500 text-sm">
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
                   (空き)
                 </div>
               )}
@@ -329,18 +335,18 @@ export default function LobbyPage() {
 
             {/* オペレーティブ */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-gray-700 mb-2">🔍 オペレーティブ</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">🔍 オペレーティブ</h3>
               {blueOperatives.length > 0 ? (
                 <div className="space-y-1">
                   {blueOperatives.map((p) => (
-                    <div key={p.id} className="p-2 bg-white rounded border border-blue-200 text-sm">
+                    <div key={p.id} className="p-2 bg-white rounded border border-team-sky/20 text-sm">
                       {p.nickname}
                       {p.id === currentPlayer?.id && ' (あなた)'}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-2 bg-gray-100 rounded text-gray-500 text-sm">
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
                   (なし)
                 </div>
               )}
@@ -367,19 +373,19 @@ export default function LobbyPage() {
           </div>
 
           {/* 観戦者 */}
-          <div className="card bg-gray-50 border-2 border-gray-300">
-            <h2 className="text-xl font-bold text-gray-700 mb-4">👁 観戦者</h2>
+          <div className="card bg-forest-bg border-2 border-neutral-soft">
+            <h2 className="text-xl font-bold text-forest-bark mb-4">👁 観戦者</h2>
             {spectators.length > 0 ? (
               <div className="space-y-1 mb-4">
                 {spectators.map((p) => (
-                  <div key={p.id} className="p-2 bg-white rounded border border-gray-200 text-sm">
+                  <div key={p.id} className="p-2 bg-white rounded border border-neutral-soft text-sm">
                     {p.nickname}
                     {p.id === currentPlayer?.id && ' (あなた)'}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-2 bg-gray-100 rounded text-gray-500 text-sm mb-4">
+              <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm mb-4">
                 (なし)
               </div>
             )}
@@ -397,16 +403,16 @@ export default function LobbyPage() {
 
         {/* ゲーム開始ボタン */}
         {currentPlayer?.isHost && (
-          <div className="card bg-green-50 border-2 border-green-300">
+          <div className="card bg-forest-moss/10 border-2 border-forest-moss/30">
             <button
               onClick={handleStartGame}
               disabled={!canStartGame()}
-              className="btn-primary w-full text-lg py-4 disabled:bg-gray-400"
+              className="btn-primary w-full text-lg py-4 disabled:bg-neutral-warm"
             >
               🎮 ゲームを開始する
             </button>
             {!canStartGame() && (
-              <p className="text-sm text-red-600 mt-2 text-center">
+              <p className="text-sm text-team-berry mt-2 text-center">
                 各チームに1人以上のプレイヤーとスパイマスターが必要です
               </p>
             )}

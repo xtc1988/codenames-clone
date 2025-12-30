@@ -1,31 +1,31 @@
 // Enums (Prisma schemaと一致)
 export enum RoomStatus {
-  WAITING = 'WAITING',
-  PLAYING = 'PLAYING',
-  FINISHED = 'FINISHED',
+  WAITING = 'waiting',
+  PLAYING = 'playing',
+  FINISHED = 'finished',
 }
 
 export enum Team {
-  RED = 'RED',
-  BLUE = 'BLUE',
-  SPECTATOR = 'SPECTATOR',
+  RED = 'red',
+  BLUE = 'blue',
+  SPECTATOR = 'spectator',
 }
 
 export enum PlayerRole {
-  SPYMASTER = 'SPYMASTER',
-  OPERATIVE = 'OPERATIVE',
+  SPYMASTER = 'spymaster',
+  OPERATIVE = 'operative',
 }
 
 export enum SpectatorView {
-  SPYMASTER = 'SPYMASTER',
-  OPERATIVE = 'OPERATIVE',
+  SPYMASTER = 'spymaster',
+  OPERATIVE = 'operative',
 }
 
 export enum CardType {
-  RED = 'RED',
-  BLUE = 'BLUE',
-  NEUTRAL = 'NEUTRAL',
-  ASSASSIN = 'ASSASSIN',
+  RED = 'red',
+  BLUE = 'blue',
+  NEUTRAL = 'neutral',
+  ASSASSIN = 'assassin',
 }
 
 // Models

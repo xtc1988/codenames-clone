@@ -94,6 +94,7 @@ export async function giveHint(params: {
     const { data, error } = await supabase
       .from('hints')
       .insert({
+        id: uuidv4(),
         room_id: roomId,
         player_id: playerId,
         word,

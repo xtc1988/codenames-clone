@@ -68,11 +68,11 @@ export async function createRoom(params: {
         id: playerId,
         room_id: room.id,
         nickname: hostNickname,
-        team: 'SPECTATOR',
+        team: 'spectator',
         role: null,
         session_id: sessionId,
         is_host: true,
-        spectator_view: 'OPERATIVE',
+        spectator_view: 'operative',
       })
       .select()
       .single();
@@ -245,11 +245,11 @@ export async function joinRoom(params: {
         id: playerId,
         room_id: roomId,
         nickname,
-        team: 'SPECTATOR',
+        team: 'spectator',
         role: null,
         session_id: sessionId,
         is_host: false,
-        spectator_view: 'OPERATIVE',
+        spectator_view: 'operative',
       })
       .select()
       .single();
@@ -357,9 +357,9 @@ export async function getWordPacks() {
  */
 export async function updatePlayer(params: {
   playerId: string;
-  team?: 'RED' | 'BLUE' | 'SPECTATOR';
-  role?: 'SPYMASTER' | 'OPERATIVE' | null;
-  spectatorView?: 'SPYMASTER' | 'OPERATIVE';
+  team?: 'red' | 'blue' | 'spectator';
+  role?: 'spymaster' | 'operative' | null;
+  spectatorView?: 'spymaster' | 'operative';
 }): Promise<Player> {
   const { playerId, team, role, spectatorView } = params;
 

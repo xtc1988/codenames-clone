@@ -1,35 +1,209 @@
+/* Forest Nature Theme - Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Quicksand:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-forest-bg text-forest-bark font-body antialiased;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L35 15 L30 12 L25 15 Z' fill='%232d5a3d' opacity='0.05'/%3E%3C/svg%3E");
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-display font-bold tracking-tight;
+  }
+
+  /* カスタムスクロールバー - Forest Nature風 */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-forest-bg rounded-full;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-forest-moss/50 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-forest-moss;
   }
 }
 
 @layer components {
+  /* プライマリボタン - 深い緑 */
   .btn-primary {
-    @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed;
+    @apply px-6 py-3 bg-forest-primary text-white font-body font-semibold text-base
+           rounded-card border-none
+           hover:bg-forest-moss hover:-translate-y-0.5
+           active:translate-y-0
+           transition-all duration-200 cursor-pointer
+           shadow-card hover:shadow-card-hover;
   }
 
+  /* セカンダリボタン - ボーダー */
   .btn-secondary {
-    @apply px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors duration-200;
+    @apply px-6 py-3 bg-transparent text-forest-primary font-body font-medium text-base
+           rounded-full border-2 border-forest-moss
+           hover:bg-forest-moss hover:text-white
+           transition-all duration-200 cursor-pointer;
   }
 
+  /* 危険ボタン - ベリー */
   .btn-danger {
-    @apply px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200;
+    @apply px-6 py-3 bg-team-berry text-white font-body font-semibold text-base
+           rounded-card border-none
+           hover:bg-team-berry-dark
+           transition-all duration-200 cursor-pointer
+           shadow-card;
   }
 
+  /* カードコンテナ - クリーム背景 */
   .card {
-    @apply bg-white rounded-lg shadow-md p-6;
+    @apply bg-forest-cream border-2 border-neutral-soft/30 rounded-nature p-6 shadow-soft;
   }
 
+  /* フォーム要素 */
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply w-full px-5 py-3.5 bg-forest-cream border-2 border-forest-moss rounded-card
+           text-forest-bark placeholder-neutral-muted font-body
+           focus:outline-none focus:border-forest-primary focus:ring-2 focus:ring-forest-primary/20
+           transition-all duration-200;
   }
 
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-2;
+    @apply block text-sm font-display font-normal text-forest-primary mb-2;
+  }
+
+  /* チームドット */
+  .team-dot {
+    @apply w-3 h-3 rounded-full inline-block;
+  }
+
+  .team-dot-red {
+    @apply bg-team-berry;
+  }
+
+  .team-dot-blue {
+    @apply bg-team-sky;
+  }
+
+  /* スコアバッジ - Forest風 */
+  .score-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 font-body font-semibold text-lg rounded-card;
+  }
+
+  .score-badge-red {
+    @apply bg-team-berry/10 text-team-berry;
+  }
+
+  .score-badge-blue {
+    @apply bg-team-sky/10 text-team-sky;
+  }
+
+  /* プレイヤーパネル */
+  .player-panel {
+    @apply bg-forest-cream border-2 border-neutral-soft/30 rounded-nature p-5 shadow-soft;
+  }
+
+  .player-item {
+    @apply flex items-center gap-3 py-3 transition-all duration-150;
+  }
+
+  .player-item-red {
+    @apply pl-3 border-l-4 border-team-berry;
+  }
+
+  .player-item-blue {
+    @apply pl-3 border-l-4 border-team-sky;
+  }
+
+  /* プレイヤーアバター */
+  .player-avatar {
+    @apply w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold;
+  }
+
+  .player-avatar-red {
+    @apply bg-team-berry;
+  }
+
+  .player-avatar-blue {
+    @apply bg-team-sky;
+  }
+
+  /* 役割バッジ */
+  .role-badge {
+    @apply text-xs px-2 py-1 font-body font-semibold rounded-full;
+  }
+
+  .role-badge-spymaster {
+    @apply bg-forest-moss/20 text-forest-primary;
+  }
+
+  .role-badge-operative {
+    @apply bg-neutral-warm/50 text-forest-bark;
+  }
+
+  /* ヒント表示 - 自然なグラデーション */
+  .hint-display {
+    @apply bg-gradient-to-br from-forest-moss/10 to-forest-primary/10 border-2 border-forest-moss/30 rounded-nature p-6;
+  }
+
+  /* ターンインジケーター */
+  .turn-indicator {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-body font-semibold text-sm text-white;
+  }
+
+  .turn-indicator-red {
+    @apply bg-team-berry;
+  }
+
+  .turn-indicator-blue {
+    @apply bg-team-sky;
+  }
+
+  /* 勝利メッセージ */
+  .victory-message {
+    @apply font-display text-4xl font-bold animate-pop-in;
+  }
+
+  .victory-red {
+    @apply text-team-berry;
+  }
+
+  .victory-blue {
+    @apply text-team-sky;
+  }
+
+  /* セクションタイトル */
+  .section-title {
+    @apply font-display text-sm text-forest-primary pb-3 mb-4 border-b-2 border-forest-moss/50;
+  }
+}
+
+/* ゲームボードグリッド */
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+}
+
+@media (min-width: 768px) {
+  .game-board {
+    gap: 18px;
+  }
+}
+
+/* ヘッダーグラデーション */
+.header-gradient {
+  background: linear-gradient(90deg, #6b8e50, #2d5a3d, #6b8e50);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 8: Cyberpunk</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --panel: #111;
+      --neon-red: #ff073a;
+      --neon-blue: #00f0ff;
+      --neon-green: #39ff14;
+      --gray: #333;
+    }
+
+    body {
+      font-family: 'Exo 2', sans-serif;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    .glitch-line {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--neon-blue);
+      box-shadow: 0 0 20px var(--neon-blue);
+      animation: glitch 3s infinite;
+    }
+
+    @keyframes glitch {
+      0%, 95%, 100% { transform: translateX(0); opacity: 1; }
+      96% { transform: translateX(-100%); opacity: 0; }
+      97% { transform: translateX(100%); opacity: 0; }
+    }
+
+    .header {
+      background: var(--panel);
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--gray);
+    }
+
+    .logo {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 28px;
+      color: var(--neon-blue);
+      text-shadow: 0 0 10px var(--neon-blue);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo::before {
+      content: '//';
+      color: var(--neon-green);
+    }
+
+    .stats {
+      display: flex;
+      gap: 40px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: #666;
+      letter-spacing: 2px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+    }
+
+    .stat-red .stat-value {
+      color: var(--neon-red);
+      text-shadow: 0 0 10px var(--neon-red);
+    }
+
+    .stat-blue .stat-value {
+      color: var(--neon-blue);
+      text-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .status-badge {
+      background: var(--neon-red);
+      color: var(--bg);
+      padding: 8px 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 200px 1fr 250px;
+      height: calc(100vh - 80px);
+    }
+
+    .left-panel, .right-panel {
+      background: var(--panel);
+      border-right: 1px solid var(--gray);
+      padding: 25px;
+    }
+
+    .right-panel {
+      border-right: none;
+      border-left: 1px solid var(--gray);
+    }
+
+    .panel-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: var(--neon-green);
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--gray);
+    }
+
+    .player-list {
+      list-style: none;
+    }
+
+    .player-item {
+      padding: 10px;
+      margin-bottom: 8px;
+      background: rgba(255,255,255,0.02);
+      border-left: 3px solid;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .player-item.red { border-color: var(--neon-red); }
+    .player-item.blue { border-color: var(--neon-blue); }
+
+    .player-role {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: #666;
+    }
+
+    .game-area {
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .terminal {
+      background: rgba(0,240,255,0.05);
+      border: 1px solid var(--neon-blue);
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      color: var(--neon-green);
+    }
+
+    .terminal-header::before {
+      content: '>';
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .terminal-form {
+      display: flex;
+      gap: 15px;
+    }
+
+    .terminal-form input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--gray);
+      padding: 12px 15px;
+      color: var(--neon-green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+    }
+
+    .terminal-form input:focus {
+      outline: none;
+      border-color: var(--neon-blue);
+    }
+
+    .terminal-form button {
+      background: var(--neon-red);
+      border: none;
+      padding: 12px 30px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 14px;
+      cursor: pointer;
+      clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      flex: 1;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--gray);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: transparent;
+      transition: background 0.3s;
+    }
+
+    .card:hover {
+      border-color: var(--neon-blue);
+    }
+
+    .card:hover::before {
+      background: var(--neon-blue);
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .card.revealed-red {
+      background: rgba(255,7,58,0.2);
+      border-color: var(--neon-red);
+    }
+
+    .card.revealed-red::before {
+      background: var(--neon-red);
+      box-shadow: 0 0 10px var(--neon-red);
+    }
+
+    .card.revealed-blue {
+      background: rgba(0,240,255,0.2);
+      border-color: var(--neon-blue);
+    }
+
+    .card.revealed-blue::before {
+      background: var(--neon-blue);
+      box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .card.revealed-neutral {
+      background: rgba(100,100,100,0.2);
+      opacity: 0.4;
+    }
+
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .actions button {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--gray);
+      color: #666;
+      padding: 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .actions button:hover {
+      border-color: var(--neon-green);
+      color: var(--neon-green);
+    }
+
+    .log-feed {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      color: #555;
+    }
+
+    .log-item {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .log-time { color: var(--neon-green); }
+  </style>
+</head>
+<body>
+  <div class="glitch-line"></div>
+
+  <header class="header">
+    <div class="logo">CODENAMES_SYS</div>
+    <div class="stats">
+      <div class="stat-item stat-red">
+        <span class="stat-label">RED_TEAM</span>
+        <span class="stat-value">7/9</span>
+      </div>
+      <div class="stat-item stat-blue">
+        <span class="stat-label">BLUE_TEAM</span>
+        <span class="stat-value">6/8</span>
+      </div>
+    </div>
+    <div class="status-badge">ACTIVE: RED</div>
+  </header>
+
+  <div class="main-grid">
+    <div class="left-panel">
+      <div class="panel-title">AGENTS_ONLINE</div>
+      <ul class="player-list">
+        <li class="player-item red">Tanaka <span class="player-role">[SPYMASTER]</span></li>
+        <li class="player-item red">Yamada <span class="player-role">[OPERATIVE]</span></li>
+        <li class="player-item blue">Suzuki <span class="player-role">[SPYMASTER]</span></li>
+        <li class="player-item blue">Sato <span class="player-role">[OPERATIVE]</span></li>
+      </ul>
+    </div>
+
+    <main class="game-area">
+      <div class="terminal">
+        <div class="terminal-header">TRANSMIT_SIGNAL</div>
+        <div class="terminal-form">
+          <input type="text" placeholder="ENTER_CODENAME...">
+          <input type="number" value="2" style="width:70px;text-align:center;">
+          <button>EXEC</button>
+        </div>
+      </div>
+
+      <div class="board">
+        <div class="card revealed-red">TOKYO</div>
+        <div class="card">APPLE</div>
+        <div class="card revealed-blue">OCEAN</div>
+        <div class="card">MOUNTAIN</div>
+        <div class="card">TRAIN</div>
+        <div class="card">BOOK</div>
+        <div class="card revealed-red">FIRE</div>
+        <div class="card">WATER</div>
+        <div class="card revealed-neutral">STONE</div>
+        <div class="card">MOON</div>
+        <div class="card">STAR</div>
+        <div class="card revealed-blue">COFFEE</div>
+        <div class="card">MUSIC</div>
+        <div class="card">GARDEN</div>
+        <div class="card">BRIDGE</div>
+        <div class="card revealed-red">CLOCK</div>
+        <div class="card">WINDOW</div>
+        <div class="card">CLOUD</div>
+        <div class="card">RIVER</div>
+        <div class="card revealed-blue">SNOW</div>
+        <div class="card">FOREST</div>
+        <div class="card">CASTLE</div>
+        <div class="card">DRAGON</div>
+        <div class="card">LIGHT</div>
+        <div class="card">SHADOW</div>
+      </div>
+
+      <div class="actions">
+        <button>END_TURN</button>
+        <button>REFRESH_DATA</button>
+      </div>
+    </main>
+
+    <div class="right-panel">
+      <div class="panel-title">SYSTEM_LOG</div>
+      <div class="log-feed">
+        <div class="log-item"><span class="log-time">12:45:03</span> RED revealed TOKYO</div>
+        <div class="log-item"><span class="log-time">12:44:28</span> Hint: "City 2"</div>
+        <div class="log-item"><span class="log-time">12:43:15</span> Turn changed to RED</div>
+        <div class="log-item"><span class="log-time">12:42:50</span> BLUE revealed OCEAN</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
