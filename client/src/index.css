@@ -1,5 +1,5 @@
-/* Risograph Print Studio - Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+/* Forest Nature Theme - Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Quicksand:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,76 +7,73 @@
 
 @layer base {
   body {
-    @apply bg-paper-cream text-riso-navy font-body antialiased;
-    background-image: 
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='0.03'/%3E%3C/svg%3E");
+    @apply bg-forest-bg text-forest-bark font-body antialiased;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L35 15 L30 12 L25 15 Z' fill='%232d5a3d' opacity='0.05'/%3E%3C/svg%3E");
   }
   
   h1, h2, h3, h4 {
-    @apply font-display font-semibold tracking-tight;
+    @apply font-display font-bold tracking-tight;
   }
 
-  /* カスタムスクロールバー - リソグラフ風 */
+  /* カスタムスクロールバー - Forest Nature風 */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-paper-warm rounded-full;
+    @apply bg-forest-bg rounded-full;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-neutral-warm rounded-full;
+    @apply bg-forest-moss/50 rounded-full;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-neutral-muted;
+    @apply bg-forest-moss;
   }
 }
 
 @layer components {
-  /* プライマリボタン - マスタードアクセント */
+  /* プライマリボタン - 深い緑 */
   .btn-primary {
-    @apply px-6 py-3 bg-riso-mustard text-riso-navy font-body font-semibold text-base
-           rounded-riso border-2 border-riso-navy
-           hover:bg-riso-mustard-light hover:shadow-card-hover
-           active:shadow-card-active active:translate-x-[1px] active:translate-y-[1px]
-           transition-all duration-150 cursor-pointer
-           shadow-card;
+    @apply px-6 py-3 bg-forest-primary text-white font-body font-semibold text-base
+           rounded-card border-none
+           hover:bg-forest-moss hover:-translate-y-0.5
+           active:translate-y-0
+           transition-all duration-200 cursor-pointer
+           shadow-card hover:shadow-card-hover;
   }
 
-  /* セカンダリボタン - ペーパー風 */
+  /* セカンダリボタン - ボーダー */
   .btn-secondary {
-    @apply px-6 py-3 bg-paper-warm text-riso-navy font-body font-medium text-base
-           rounded-riso border-2 border-neutral-soft
-           hover:bg-paper-aged hover:border-neutral-muted
-           active:translate-x-[1px] active:translate-y-[1px]
-           transition-all duration-150 cursor-pointer;
+    @apply px-6 py-3 bg-transparent text-forest-primary font-body font-medium text-base
+           rounded-full border-2 border-forest-moss
+           hover:bg-forest-moss hover:text-white
+           transition-all duration-200 cursor-pointer;
   }
 
-  /* 危険ボタン - コーラル */
+  /* 危険ボタン - ベリー */
   .btn-danger {
-    @apply px-6 py-3 bg-riso-coral text-white font-body font-semibold text-base
-           rounded-riso border-2 border-riso-coral-dark
-           hover:bg-riso-coral-dark
-           active:translate-x-[1px] active:translate-y-[1px]
-           transition-all duration-150 cursor-pointer
+    @apply px-6 py-3 bg-team-berry text-white font-body font-semibold text-base
+           rounded-card border-none
+           hover:bg-team-berry-dark
+           transition-all duration-200 cursor-pointer
            shadow-card;
   }
 
-  /* カードコンテナ - ペーパー風 */
+  /* カードコンテナ - クリーム背景 */
   .card {
-    @apply bg-white border-2 border-neutral-soft rounded-riso p-5 shadow-soft;
+    @apply bg-forest-cream border-2 border-neutral-soft/30 rounded-nature p-6 shadow-soft;
   }
 
   /* フォーム要素 */
   .input-field {
-    @apply w-full px-4 py-3 bg-paper-warm border-2 border-neutral-soft rounded-card
-           text-riso-navy placeholder-neutral-muted font-body
-           focus:outline-none focus:border-riso-teal focus:ring-2 focus:ring-riso-teal/20
-           transition-all duration-150;
+    @apply w-full px-5 py-3.5 bg-forest-cream border-2 border-forest-moss rounded-card
+           text-forest-bark placeholder-neutral-muted font-body
+           focus:outline-none focus:border-forest-primary focus:ring-2 focus:ring-forest-primary/20
+           transition-all duration-200;
   }
 
   .label {
-    @apply block text-sm font-body font-semibold text-riso-navy mb-2;
+    @apply block text-sm font-display font-normal text-forest-primary mb-2;
   }
 
   /* チームドット */
@@ -85,41 +82,54 @@
   }
 
   .team-dot-red {
-    @apply bg-riso-coral;
+    @apply bg-team-berry;
   }
 
   .team-dot-blue {
-    @apply bg-riso-teal;
+    @apply bg-team-sky;
   }
 
-  /* スコアバッジ - リソグラフ風 */
+  /* スコアバッジ - Forest風 */
   .score-badge {
-    @apply inline-flex items-center gap-2 px-4 py-2 font-display text-xl rounded-card;
+    @apply inline-flex items-center gap-2 px-4 py-2 font-body font-semibold text-lg rounded-card;
   }
 
   .score-badge-red {
-    @apply bg-riso-coral/10 text-riso-coral border-2 border-riso-coral/30;
+    @apply bg-team-berry/10 text-team-berry;
   }
 
   .score-badge-blue {
-    @apply bg-riso-teal/10 text-riso-teal border-2 border-riso-teal/30;
+    @apply bg-team-sky/10 text-team-sky;
   }
 
   /* プレイヤーパネル */
   .player-panel {
-    @apply bg-white border-2 border-neutral-soft rounded-riso p-4 shadow-soft;
+    @apply bg-forest-cream border-2 border-neutral-soft/30 rounded-nature p-5 shadow-soft;
   }
 
   .player-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-card transition-all duration-150;
+    @apply flex items-center gap-3 py-3 transition-all duration-150;
   }
 
   .player-item-red {
-    @apply bg-riso-coral/10 border-l-4 border-riso-coral;
+    @apply pl-3 border-l-4 border-team-berry;
   }
 
   .player-item-blue {
-    @apply bg-riso-teal/10 border-l-4 border-riso-teal;
+    @apply pl-3 border-l-4 border-team-sky;
+  }
+
+  /* プレイヤーアバター */
+  .player-avatar {
+    @apply w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold;
+  }
+
+  .player-avatar-red {
+    @apply bg-team-berry;
+  }
+
+  .player-avatar-blue {
+    @apply bg-team-sky;
   }
 
   /* 役割バッジ */
@@ -128,35 +138,29 @@
   }
 
   .role-badge-spymaster {
-    @apply bg-riso-mustard text-riso-navy;
+    @apply bg-forest-moss/20 text-forest-primary;
   }
 
   .role-badge-operative {
-    @apply bg-neutral-warm text-riso-navy;
+    @apply bg-neutral-warm/50 text-forest-bark;
   }
 
-  /* ヒント表示 - 吹き出し風 */
+  /* ヒント表示 - 自然なグラデーション */
   .hint-display {
-    @apply bg-riso-mustard/20 border-2 border-riso-mustard rounded-riso p-5 relative;
-  }
-
-  .hint-display::before {
-    content: '';
-    @apply absolute -top-3 left-8 w-6 h-6 bg-riso-mustard/20 border-l-2 border-t-2 border-riso-mustard;
-    transform: rotate(45deg);
+    @apply bg-gradient-to-br from-forest-moss/10 to-forest-primary/10 border-2 border-forest-moss/30 rounded-nature p-6;
   }
 
   /* ターンインジケーター */
   .turn-indicator {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-body font-semibold text-sm animate-pulse-soft;
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-body font-semibold text-sm text-white;
   }
 
   .turn-indicator-red {
-    @apply bg-riso-coral text-white;
+    @apply bg-team-berry;
   }
 
   .turn-indicator-blue {
-    @apply bg-riso-teal text-white;
+    @apply bg-team-sky;
   }
 
   /* 勝利メッセージ */
@@ -165,44 +169,35 @@
   }
 
   .victory-red {
-    @apply text-riso-coral;
+    @apply text-team-berry;
   }
 
   .victory-blue {
-    @apply text-riso-teal;
+    @apply text-team-sky;
   }
-}
 
-/* 版ズレ効果 - hover時に微妙にズレる */
-.misprint-effect {
-  position: relative;
-}
-
-.misprint-effect::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, transparent 40%, rgba(232,93,76,0.05) 50%, transparent 60%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.misprint-effect:hover::after {
-  opacity: 1;
+  /* セクションタイトル */
+  .section-title {
+    @apply font-display text-sm text-forest-primary pb-3 mb-4 border-b-2 border-forest-moss/50;
+  }
 }
 
 /* ゲームボードグリッド */
 .game-board {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  gap: 15px;
 }
 
 @media (min-width: 768px) {
   .game-board {
-    gap: 16px;
+    gap: 18px;
   }
+}
+
+/* ヘッダーグラデーション */
+.header-gradient {
+  background: linear-gradient(90deg, #6b8e50, #2d5a3d, #6b8e50);
 }
 
 /* Reduced motion */

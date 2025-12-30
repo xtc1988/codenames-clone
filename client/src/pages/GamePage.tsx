@@ -23,7 +23,7 @@ function PlayerPanel({ players, currentTurn }: { players: Player[]; currentTurn:
 
   const renderPlayer = (player: Player) => (
     <div key={player.id} className={"player-item " + (player.team === Team.RED ? "player-item-red" : player.team === Team.BLUE ? "player-item-blue" : "")}>
-      <span className="font-medium text-riso-navy">{player.nickname}</span>
+      <span className="font-medium text-forest-bark">{player.nickname}</span>
       {player.role && (
         <span className={"role-badge ml-auto " + (player.role === PlayerRole.SPYMASTER ? "role-badge-spymaster" : "role-badge-operative")}>
           {player.role === PlayerRole.SPYMASTER ? "SM" : "OP"}
@@ -36,17 +36,17 @@ function PlayerPanel({ players, currentTurn }: { players: Player[]; currentTurn:
     <div className="player-panel space-y-4">
       <h3 className="text-sm font-body font-bold text-neutral-muted uppercase tracking-wider">AGENTS</h3>
       <div className="space-y-1">
-        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.RED ? "text-riso-coral" : "text-neutral-muted")}>
+        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.RED ? "text-team-berry" : "text-neutral-muted")}>
           <span className="team-dot team-dot-red"></span>
-          <span>Red Team</span>
+          <span>Berry Team</span>
           {currentTurn === Team.RED && <span className="text-xs">(Turn)</span>}
         </div>
         {redAGENTS.length > 0 ? redAGENTS.map(renderPlayer) : <div className="text-sm text-neutral-muted pl-5">No players</div>}
       </div>
       <div className="space-y-1">
-        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.BLUE ? "text-riso-teal" : "text-neutral-muted")}>
+        <div className={"flex items-center gap-2 text-sm font-medium " + (currentTurn === Team.BLUE ? "text-team-sky" : "text-neutral-muted")}>
           <span className="team-dot team-dot-blue"></span>
-          <span>Blue Team</span>
+          <span>Sky Team</span>
           {currentTurn === Team.BLUE && <span className="text-xs">(Turn)</span>}
         </div>
         {blueAGENTS.length > 0 ? blueAGENTS.map(renderPlayer) : <div className="text-sm text-neutral-muted pl-5">No players</div>}
@@ -54,7 +54,7 @@ function PlayerPanel({ players, currentTurn }: { players: Player[]; currentTurn:
       {spectators.length > 0 && (
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm font-medium text-neutral-muted">
-            <span className="w-3 h-3 rounded-full bg-ink-light"></span>
+            <span className="w-3 h-3 rounded-full bg-neutral-warm"></span>
             <span>Spectators</span>
           </div>
           {spectators.map(player => (<div key={player.id} className="player-item"><span className="text-neutral-muted">{player.nickname}</span></div>))}
@@ -265,7 +265,7 @@ export default function GamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-paper-cream">
+      <div className="min-h-screen flex items-center justify-center bg-forest-bg">
         <p className="text-neutral-muted">Loading game...</p>
       </div>
     );
@@ -275,7 +275,7 @@ export default function GamePage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card max-w-md">
-          <p className="text-riso-coral mb-4">{error}</p>
+          <p className="text-team-berry mb-4">{error}</p>
           <Link to={`/room/${code}`} className="btn-primary inline-block">
             Back to Lobby
           </Link>
@@ -285,11 +285,11 @@ export default function GamePage() {
   }
 
   return (
-    <div className="min-h-screen p-4 lg:p-6 bg-paper-cream">
+    <div className="min-h-screen p-4 lg:p-6 bg-forest-bg">
       <div className="max-w-[1600px] mx-auto"><div className="flex gap-6"><div className="hidden lg:block w-64 flex-shrink-0"><PlayerPanel players={players} currentTurn={currentTurn} /></div><div className="flex-1 min-w-0">
         {/* ヘッダー */}
         <div className="mb-4 flex items-center justify-between">
-          <Link to={`/room/${code}`} className="text-riso-teal hover:text-riso-teal-light hover:underline transition-colors text-sm">
+          <Link to={`/room/${code}`} className="text-team-sky hover:text-team-sky-light hover:underline transition-colors text-sm">
             Back to Lobby
           </Link>
           <button onClick={loadGameData} className="btn-secondary text-sm px-3 py-1">
@@ -311,16 +311,16 @@ export default function GamePage() {
 
             <div className="text-lg font-bold">
               {winner ? (
-                <span className="text-riso-navy uppercase tracking-wider">
-                   {winner === Team.RED ? ' Red Team' : ' Blue Team'} Wins!
+                <span className="text-forest-bark uppercase tracking-wider">
+                   {winner === Team.RED ? ' Berry Team' : ' Sky Team'} Wins!
                 </span>
               ) : (
                 <span>
                   ACTIVE:{' '}
                   {currentTurn === Team.RED ? (
-                    <span className="text-riso-coral"> RED TEAM</span>
+                    <span className="text-team-berry"> BERRY TEAM</span>
                   ) : (
-                    <span className="text-riso-teal"> BLUE TEAM</span>
+                    <span className="text-team-sky"> SKY TEAM</span>
                   )}
                 </span>
               )}
@@ -329,7 +329,7 @@ export default function GamePage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-riso-coral/10 border border-rose-500/30 text-riso-coral rounded">
+          <div className="mb-4 p-3 bg-team-berry/10 border border-rose-500/30 text-team-berry rounded">
             {error}
           </div>
         )}
@@ -341,14 +341,14 @@ export default function GamePage() {
                TRANSMISSION: "{latestHint.word}" {latestHint.count}
             </p>
             <p className="text-sm text-neutral-muted">
-              by {latestHint.player?.nickname} ({latestHint.team === Team.RED ? ' RED' : ' BLUE'})
+              by {latestHint.player?.nickname} ({latestHint.team === Team.RED ? ' Berry' : ' Sky'})
             </p>
           </div>
         )}
 
         {/* ヒント入力（スパイマスター用） */}
         {canGiveHint && (
-          <div className="card mb-4 bg-gradient-to-r bg-riso-mustard/10">
+          <div className="card mb-4 bg-gradient-to-r bg-forest-moss/10">
             <h3 className="font-bold mb-2">Give a Hint</h3>
             <div className="flex gap-2">
               <input
@@ -395,7 +395,7 @@ export default function GamePage() {
 
         {/* ターンパスボタン */}
         {canSelectCard && (
-          <div className="card bg-gradient-to-r bg-paper-warm">
+          <div className="card bg-gradient-to-r bg-forest-cream">
             <button
               onClick={handlePassTurn}
               className="btn-secondary w-full text-lg py-3"

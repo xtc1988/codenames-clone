@@ -213,7 +213,7 @@ export default function LobbyPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card max-w-md">
-          <p className="text-riso-coral mb-4">{error}</p>
+          <p className="text-team-berry mb-4">{error}</p>
           <Link to="/" className="btn-primary inline-block">
             トップに戻る
           </Link>
@@ -223,17 +223,17 @@ export default function LobbyPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 bg-paper-cream">
+    <div className="min-h-screen p-4 bg-forest-bg">
       <div className="max-w-6xl mx-auto">
         {/* ヘッダー */}
         <div className="mb-6 flex items-center justify-between">
-          <Link to="/" className="text-riso-teal hover:underline text-sm">
+          <Link to="/" className="text-team-sky hover:underline text-sm">
             ← トップに戻る
           </Link>
           <div className="flex items-center gap-4">
             <div className="text-sm text-neutral-muted">
               ルームコード:
-              <span className="ml-2 px-3 py-1 bg-riso-teal/20 text-riso-teal-dark font-mono rounded">
+              <span className="ml-2 px-3 py-1 bg-team-sky/20 text-team-sky-dark font-mono rounded">
                 {room?.code}
               </span>
             </div>
@@ -249,7 +249,7 @@ export default function LobbyPage() {
         </p>
 
         {error && (
-          <div className="mb-4 p-3 bg-riso-coral/10 border border-riso-coral/30 text-riso-coral rounded">
+          <div className="mb-4 p-3 bg-team-berry/10 border border-team-berry/30 text-team-berry rounded">
             {error}
           </div>
         )}
@@ -257,19 +257,19 @@ export default function LobbyPage() {
         {/* チーム選択 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* 赤チーム */}
-          <div className="card bg-riso-coral/10 border-2 border-riso-coral/30">
-            <h2 className="text-xl font-bold text-riso-coral mb-4">🔴 赤チーム</h2>
+          <div className="card bg-team-berry/10 border-2 border-team-berry/30">
+            <h2 className="text-xl font-bold text-team-berry mb-4">🔴 赤チーム</h2>
 
             {/* スパイマスター */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-riso-navy mb-2">👑 スパイマスター</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">👑 スパイマスター</h3>
               {redSpymaster ? (
-                <div className="p-2 bg-white rounded border border-riso-coral/20">
+                <div className="p-2 bg-white rounded border border-team-berry/20">
                   {redSpymaster.nickname}
                   {redSpymaster.id === currentPlayer?.id && ' (あなた)'}
                 </div>
               ) : (
-                <div className="p-2 bg-paper-warm rounded text-neutral-muted text-sm">
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
                   (空き)
                 </div>
               )}
@@ -277,18 +277,18 @@ export default function LobbyPage() {
 
             {/* オペレーティブ */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-riso-navy mb-2">🔍 オペレーティブ</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">🔍 オペレーティブ</h3>
               {redOperatives.length > 0 ? (
                 <div className="space-y-1">
                   {redOperatives.map((p) => (
-                    <div key={p.id} className="p-2 bg-white rounded border border-riso-coral/20 text-sm">
+                    <div key={p.id} className="p-2 bg-white rounded border border-team-berry/20 text-sm">
                       {p.nickname}
                       {p.id === currentPlayer?.id && ' (あなた)'}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-2 bg-paper-warm rounded text-neutral-muted text-sm">
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
                   (なし)
                 </div>
               )}
@@ -315,19 +315,19 @@ export default function LobbyPage() {
           </div>
 
           {/* 青チーム */}
-          <div className="card bg-riso-teal/10 border-2 border-riso-teal/30">
-            <h2 className="text-xl font-bold text-riso-teal mb-4">🔵 青チーム</h2>
+          <div className="card bg-team-sky/10 border-2 border-team-sky/30">
+            <h2 className="text-xl font-bold text-team-sky mb-4">🔵 青チーム</h2>
 
             {/* スパイマスター */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-riso-navy mb-2">👑 スパイマスター</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">👑 スパイマスター</h3>
               {blueSpymaster ? (
-                <div className="p-2 bg-white rounded border border-riso-teal/20">
+                <div className="p-2 bg-white rounded border border-team-sky/20">
                   {blueSpymaster.nickname}
                   {blueSpymaster.id === currentPlayer?.id && ' (あなた)'}
                 </div>
               ) : (
-                <div className="p-2 bg-paper-warm rounded text-neutral-muted text-sm">
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
                   (空き)
                 </div>
               )}
@@ -335,18 +335,18 @@ export default function LobbyPage() {
 
             {/* オペレーティブ */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-riso-navy mb-2">🔍 オペレーティブ</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">🔍 オペレーティブ</h3>
               {blueOperatives.length > 0 ? (
                 <div className="space-y-1">
                   {blueOperatives.map((p) => (
-                    <div key={p.id} className="p-2 bg-white rounded border border-riso-teal/20 text-sm">
+                    <div key={p.id} className="p-2 bg-white rounded border border-team-sky/20 text-sm">
                       {p.nickname}
                       {p.id === currentPlayer?.id && ' (あなた)'}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-2 bg-paper-warm rounded text-neutral-muted text-sm">
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
                   (なし)
                 </div>
               )}
@@ -373,8 +373,8 @@ export default function LobbyPage() {
           </div>
 
           {/* 観戦者 */}
-          <div className="card bg-paper-cream border-2 border-neutral-soft">
-            <h2 className="text-xl font-bold text-riso-navy mb-4">👁 観戦者</h2>
+          <div className="card bg-forest-bg border-2 border-neutral-soft">
+            <h2 className="text-xl font-bold text-forest-bark mb-4">👁 観戦者</h2>
             {spectators.length > 0 ? (
               <div className="space-y-1 mb-4">
                 {spectators.map((p) => (
@@ -385,7 +385,7 @@ export default function LobbyPage() {
                 ))}
               </div>
             ) : (
-              <div className="p-2 bg-paper-warm rounded text-neutral-muted text-sm mb-4">
+              <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm mb-4">
                 (なし)
               </div>
             )}
@@ -403,7 +403,7 @@ export default function LobbyPage() {
 
         {/* ゲーム開始ボタン */}
         {currentPlayer?.isHost && (
-          <div className="card bg-riso-mustard/10 border-2 border-riso-mustard/30">
+          <div className="card bg-forest-moss/10 border-2 border-forest-moss/30">
             <button
               onClick={handleStartGame}
               disabled={!canStartGame()}
@@ -412,7 +412,7 @@ export default function LobbyPage() {
               🎮 ゲームを開始する
             </button>
             {!canStartGame() && (
-              <p className="text-sm text-riso-coral mt-2 text-center">
+              <p className="text-sm text-team-berry mt-2 text-center">
                 各チームに1人以上のプレイヤーとスパイマスターが必要です
               </p>
             )}

@@ -9,26 +9,26 @@ interface GameCardProps {
 
 export default function GameCard({ card, isSpymaster, onSelect, disabled }: GameCardProps) {
   const getCardStyles = () => {
-    // Risograph Print Studio スタイル
+    // Forest Nature スタイル
     const baseStyles = `
       relative w-full aspect-[4/3] font-body font-semibold text-sm md:text-base 
-      transition-all duration-200 flex items-center justify-center p-3 
-      rounded-card border-2 uppercase tracking-wide
+      transition-all duration-300 flex items-center justify-center p-3 
+      rounded-card border-2 tracking-wide
     `;
 
     // 公開されたカード
     if (card.isRevealed) {
       switch (card.type) {
         case CardTypeEnum.RED:
-          return baseStyles + ' bg-riso-coral text-white border-riso-coral-dark shadow-card cursor-default animate-pop-in';
+          return baseStyles + ' bg-team-berry text-white border-team-berry-dark shadow-card cursor-default animate-pop-in';
         case CardTypeEnum.BLUE:
-          return baseStyles + ' bg-riso-teal text-white border-riso-teal-dark shadow-card cursor-default animate-pop-in';
+          return baseStyles + ' bg-team-sky text-white border-team-sky-dark shadow-card cursor-default animate-pop-in';
         case CardTypeEnum.NEUTRAL:
-          return baseStyles + ' bg-neutral-warm text-riso-navy/60 border-neutral-soft cursor-default';
+          return baseStyles + ' bg-neutral-warm text-forest-bark/60 border-neutral-soft cursor-default opacity-60';
         case CardTypeEnum.ASSASSIN:
-          return baseStyles + ' bg-riso-navy text-white border-riso-navy cursor-default animate-wiggle';
+          return baseStyles + ' bg-assassin text-white border-assassin cursor-default';
         default:
-          return baseStyles + ' bg-neutral-warm text-riso-navy cursor-default';
+          return baseStyles + ' bg-neutral-warm text-forest-bark cursor-default';
       }
     }
 
@@ -36,30 +36,30 @@ export default function GameCard({ card, isSpymaster, onSelect, disabled }: Game
     if (isSpymaster) {
       switch (card.type) {
         case CardTypeEnum.RED:
-          return baseStyles + ' bg-paper-aged text-riso-navy ring-4 ring-inset ring-riso-coral/40 border-neutral-soft cursor-default';
+          return baseStyles + ' bg-forest-bg text-forest-bark ring-4 ring-inset ring-team-berry/40 border-neutral-soft/50 cursor-default';
         case CardTypeEnum.BLUE:
-          return baseStyles + ' bg-paper-aged text-riso-navy ring-4 ring-inset ring-riso-teal/40 border-neutral-soft cursor-default';
+          return baseStyles + ' bg-forest-bg text-forest-bark ring-4 ring-inset ring-team-sky/40 border-neutral-soft/50 cursor-default';
         case CardTypeEnum.NEUTRAL:
-          return baseStyles + ' bg-paper-aged text-riso-navy/60 border-neutral-soft cursor-default';
+          return baseStyles + ' bg-forest-bg text-forest-bark/60 border-neutral-soft/50 cursor-default';
         case CardTypeEnum.ASSASSIN:
-          return baseStyles + ' bg-paper-aged text-riso-navy ring-4 ring-inset ring-riso-navy/60 border-neutral-soft cursor-default';
+          return baseStyles + ' bg-forest-bg text-forest-bark ring-4 ring-inset ring-assassin/60 border-neutral-soft/50 cursor-default';
         default:
-          return baseStyles + ' bg-paper-aged text-riso-navy border-neutral-soft cursor-default';
+          return baseStyles + ' bg-forest-bg text-forest-bark border-neutral-soft/50 cursor-default';
       }
     }
 
     // 無効（自分のターンではない）
     if (disabled) {
-      return baseStyles + ' bg-paper-warm text-neutral-muted border-neutral-soft cursor-not-allowed opacity-60';
+      return baseStyles + ' bg-forest-bg text-neutral-muted border-neutral-soft/30 cursor-not-allowed opacity-60';
     }
 
     // インタラクティブカード - ホバー効果
     return baseStyles + ` 
-      bg-white text-riso-navy border-neutral-soft 
-      shadow-card hover:shadow-card-hover hover:border-riso-mustard
+      bg-forest-bg text-forest-bark border-forest-primary/20 
+      shadow-card hover:shadow-card-hover hover:border-forest-moss
       hover:-translate-y-1
-      active:translate-y-0 active:shadow-card-active
-      cursor-pointer misprint-effect
+      active:translate-y-0
+      cursor-pointer
     `;
   };
 
@@ -67,13 +67,13 @@ export default function GameCard({ card, isSpymaster, onSelect, disabled }: Game
   const getIndicatorColor = () => {
     switch (card.type) {
       case CardTypeEnum.RED: 
-        return 'bg-riso-coral';
+        return 'bg-team-berry';
       case CardTypeEnum.BLUE: 
-        return 'bg-riso-teal';
+        return 'bg-team-sky';
       case CardTypeEnum.NEUTRAL: 
         return 'bg-neutral-warm';
       case CardTypeEnum.ASSASSIN: 
-        return 'bg-riso-navy';
+        return 'bg-assassin';
       default: 
         return 'bg-neutral-warm';
     }
@@ -113,7 +113,7 @@ export default function GameCard({ card, isSpymaster, onSelect, disabled }: Game
       {/* 暗殺者の警告オーバーレイ（スパイマスター用） */}
       {isSpymaster && !card.isRevealed && card.type === CardTypeEnum.ASSASSIN && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-riso-navy/10 text-4xl font-display font-bold">!</span>
+          <span className="text-assassin/10 text-4xl font-display font-bold">!</span>
         </div>
       )}
     </button>

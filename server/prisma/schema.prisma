@@ -38,7 +38,7 @@ model Room {
   id            String       @id @default(uuid())
   code          String       @unique @db.VarChar(6)
   name          String       @db.VarChar(100)
-  status        RoomStatus   @default(WAITING)
+  status        RoomStatus   @default(waiting)
   isPublic      Boolean      @default(true) @map("is_public")
   wordPackId    String       @map("word_pack_id")
   currentTurn   Team?        @map("current_turn")
@@ -61,11 +61,11 @@ model Player {
   id             String         @id @default(uuid())
   roomId         String         @map("room_id")
   nickname       String         @db.VarChar(50)
-  team           Team           @default(SPECTATOR)
+  team           Team           @default(spectator)
   role           PlayerRole?
   sessionId      String         @map("session_id") @db.VarChar(255)
   isHost         Boolean        @default(false) @map("is_host")
-  spectatorView  SpectatorView  @default(OPERATIVE) @map("spectator_view")
+  spectatorView  SpectatorView  @default(operative) @map("spectator_view")
   createdAt      DateTime       @default(now()) @map("created_at")
 
   room           Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
@@ -110,30 +110,30 @@ model Hint {
 }
 
 enum RoomStatus {
-  WAITING
-  PLAYING
-  FINISHED
+  waiting
+  playing
+  finished
 }
 
 enum Team {
-  RED
-  BLUE
-  SPECTATOR
+  red
+  blue
+  spectator
 }
 
 enum PlayerRole {
-  SPYMASTER
-  OPERATIVE
+  spymaster
+  operative
 }
 
 enum SpectatorView {
-  SPYMASTER
-  OPERATIVE
+  spymaster
+  operative
 }
 
 enum CardType {
-  RED
-  BLUE
-  NEUTRAL
-  ASSASSIN
+  red
+  blue
+  neutral
+  assassin
 }
