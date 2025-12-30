@@ -47,6 +47,25 @@ export interface Word {
   word: string;
 }
 
+export interface Player {
+  id: string;
+  roomId: string;
+  nickname: string;
+  team: Team;
+  role: PlayerRole | null;
+  sessionId: string;
+  isHost: boolean;
+  isAI: boolean;
+  spectatorView: SpectatorView;
+  createdAt: string;
+}
+
+export interface AIHintResponse {
+  word: string;
+  count: number;
+  reason?: string;
+}
+
 export interface Room {
   id: string;
   code: string;
@@ -63,18 +82,6 @@ export interface Room {
   players?: Player[];
   cards?: Card[];
   hints?: Hint[];
-}
-
-export interface Player {
-  id: string;
-  roomId: string;
-  nickname: string;
-  team: Team;
-  role: PlayerRole | null;
-  sessionId: string;
-  isHost: boolean;
-  spectatorView: SpectatorView;
-  createdAt: string;
 }
 
 export interface Card {
