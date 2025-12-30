@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 7: Forest Nature</title>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Quicksand:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f2eb;
+      --forest: #2d5a3d;
+      --moss: #6b8e50;
+      --bark: #5c4a3a;
+      --berry: #a65d57;
+      --sky: #7ca3b7;
+      --cream: #faf7f0;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: var(--bg);
+      color: var(--bark);
+      min-height: 100vh;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L35 15 L30 12 L25 15 Z' fill='%232d5a3d' opacity='0.05'/%3E%3C/svg%3E");
+    }
+
+    .header {
+      background: var(--forest);
+      color: var(--cream);
+      padding: 25px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, var(--moss), var(--forest), var(--moss));
+    }
+
+    .logo {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 32px;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .leaf-icon {
+      font-size: 28px;
+    }
+
+    .scores {
+      display: flex;
+      gap: 40px;
+      font-size: 18px;
+    }
+
+    .score-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .score-red .score-dot { background: var(--berry); }
+    .score-blue .score-dot { background: var(--sky); }
+
+    .turn-pill {
+      background: var(--moss);
+      padding: 10px 25px;
+      border-radius: 25px;
+      font-size: 14px;
+    }
+
+    .main-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 40px;
+    }
+
+    .sidebar {
+      background: var(--cream);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(45,90,61,0.1);
+    }
+
+    .section-title {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 14px;
+      color: var(--forest);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--moss);
+    }
+
+    .player-list {
+      list-style: none;
+    }
+
+    .player-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      font-size: 14px;
+    }
+
+    .player-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+    }
+
+    .player-avatar.red { background: var(--berry); }
+    .player-avatar.blue { background: var(--sky); }
+
+    .game-area {
+      background: var(--cream);
+      border-radius: 20px;
+      padding: 35px;
+      box-shadow: 0 10px 40px rgba(45,90,61,0.1);
+    }
+
+    .hint-section {
+      background: linear-gradient(135deg, rgba(107,142,80,0.1), rgba(45,90,61,0.1));
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+    }
+
+    .hint-label {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 13px;
+      color: var(--forest);
+      margin-bottom: 12px;
+    }
+
+    .hint-form {
+      display: flex;
+      gap: 12px;
+    }
+
+    .hint-form input {
+      flex: 1;
+      border: 2px solid var(--moss);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-family: inherit;
+      font-size: 15px;
+      background: var(--cream);
+    }
+
+    .hint-form input:focus {
+      outline: none;
+      border-color: var(--forest);
+    }
+
+    .hint-form button {
+      background: var(--forest);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      padding: 14px 35px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .hint-form button:hover {
+      background: var(--moss);
+      transform: translateY(-2px);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+    }
+
+    .card {
+      aspect-ratio: 4/3;
+      background: var(--bg);
+      border: 2px solid rgba(45,90,61,0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .card:hover {
+      border-color: var(--moss);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(45,90,61,0.15);
+    }
+
+    .card.revealed-red {
+      background: var(--berry);
+      border-color: var(--berry);
+      color: white;
+    }
+
+    .card.revealed-blue {
+      background: var(--sky);
+      border-color: var(--sky);
+      color: white;
+    }
+
+    .card.revealed-neutral {
+      background: #ccc;
+      border-color: #bbb;
+      opacity: 0.6;
+    }
+
+    .actions {
+      margin-top: 30px;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .actions button {
+      background: transparent;
+      border: 2px solid var(--moss);
+      border-radius: 25px;
+      padding: 12px 35px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--forest);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .actions button:hover {
+      background: var(--moss);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <span class="leaf-icon">🌿</span>
+      Codenames
+    </div>
+    <div class="scores">
+      <div class="score-item score-red">
+        <span class="score-dot"></span>
+        <span>Berry: 7/9</span>
+      </div>
+      <div class="score-item score-blue">
+        <span class="score-dot"></span>
+        <span>Sky: 6/8</span>
+      </div>
+    </div>
+    <div class="turn-pill">Berry Team's Turn</div>
+  </header>
+
+  <div class="main-container">
+    <aside class="sidebar">
+      <h2 class="section-title">Adventurers</h2>
+      <ul class="player-list">
+        <li class="player-item">
+          <span class="player-avatar red">SM</span>
+          <span>Tanaka</span>
+        </li>
+        <li class="player-item">
+          <span class="player-avatar red">OP</span>
+          <span>Yamada</span>
+        </li>
+        <li class="player-item">
+          <span class="player-avatar blue">SM</span>
+          <span>Suzuki</span>
+        </li>
+        <li class="player-item">
+          <span class="player-avatar blue">OP</span>
+          <span>Sato</span>
+        </li>
+      </ul>
+    </aside>
+
+    <main class="game-area">
+      <div class="hint-section">
+        <div class="hint-label">Whisper a Clue</div>
+        <div class="hint-form">
+          <input type="text" placeholder="Enter your hint...">
+          <input type="number" value="2" style="width:70px;text-align:center;">
+          <button>Send</button>
+        </div>
+      </div>
+
+      <div class="board">
+        <div class="card revealed-red">Tokyo</div>
+        <div class="card">Apple</div>
+        <div class="card revealed-blue">Ocean</div>
+        <div class="card">Mountain</div>
+        <div class="card">Train</div>
+        <div class="card">Book</div>
+        <div class="card revealed-red">Fire</div>
+        <div class="card">Water</div>
+        <div class="card revealed-neutral">Stone</div>
+        <div class="card">Moon</div>
+        <div class="card">Star</div>
+        <div class="card revealed-blue">Coffee</div>
+        <div class="card">Music</div>
+        <div class="card">Garden</div>
+        <div class="card">Bridge</div>
+        <div class="card revealed-red">Clock</div>
+        <div class="card">Window</div>
+        <div class="card">Cloud</div>
+        <div class="card">River</div>
+        <div class="card revealed-blue">Snow</div>
+        <div class="card">Forest</div>
+        <div class="card">Castle</div>
+        <div class="card">Dragon</div>
+        <div class="card">Light</div>
+        <div class="card">Shadow</div>
+      </div>
+
+      <div class="actions">
+        <button>End Turn</button>
+        <button>Refresh</button>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

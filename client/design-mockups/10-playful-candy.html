@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 10: Playful Candy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #fff5f8;
+      --pink: #ff6b9d;
+      --blue: #4ecdc4;
+      --yellow: #ffe66d;
+      --purple: #a855f7;
+      --orange: #ff9f43;
+      --text: #2d3436;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 20% 20%, var(--pink) 3px, transparent 3px),
+        radial-gradient(circle at 80% 30%, var(--blue) 4px, transparent 4px),
+        radial-gradient(circle at 40% 80%, var(--yellow) 3px, transparent 3px),
+        radial-gradient(circle at 90% 70%, var(--purple) 4px, transparent 4px);
+      background-size: 100px 100px;
+      opacity: 0.3;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      padding: 30px 40px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      border-radius: 30px;
+      padding: 25px 40px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 10px 40px rgba(255,107,157,0.3);
+    }
+
+    .logo {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      color: white;
+      text-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+    }
+
+    .scores {
+      display: flex;
+      gap: 25px;
+    }
+
+    .score-bubble {
+      background: white;
+      border-radius: 20px;
+      padding: 12px 25px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .score-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+    }
+
+    .score-red .score-dot { background: var(--pink); }
+    .score-blue .score-dot { background: var(--blue); }
+
+    .turn-pill {
+      background: var(--yellow);
+      color: var(--text);
+      padding: 12px 30px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 4px 15px rgba(255,230,109,0.4);
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 30px;
+    }
+
+    .sidebar {
+      background: white;
+      border-radius: 25px;
+      padding: 25px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+
+    .section-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--purple);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .player-list {
+      list-style: none;
+    }
+
+    .player-item {
+      background: var(--bg);
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: transform 0.2s;
+    }
+
+    .player-item:hover {
+      transform: scale(1.03);
+    }
+
+    .player-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .player-avatar.red { background: var(--pink); }
+    .player-avatar.blue { background: var(--blue); }
+
+    .player-info {
+      flex: 1;
+    }
+
+    .player-name {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .player-role {
+      font-size: 11px;
+      color: #888;
+    }
+
+    .game-area {
+      background: white;
+      border-radius: 25px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+
+    .hint-section {
+      background: linear-gradient(135deg, var(--yellow), var(--orange));
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+
+    .hint-label {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .hint-form {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .hint-form input {
+      border: 3px solid white;
+      border-radius: 15px;
+      padding: 14px 20px;
+      font-family: inherit;
+      font-size: 16px;
+      background: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .hint-form input:focus {
+      outline: none;
+      border-color: var(--purple);
+    }
+
+    .hint-form button {
+      background: var(--purple);
+      border: none;
+      border-radius: 15px;
+      color: white;
+      padding: 14px 35px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s;
+      box-shadow: 0 4px 15px rgba(168,85,247,0.4);
+    }
+
+    .hint-form button:hover {
+      transform: scale(1.05);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .card {
+      aspect-ratio: 4/3;
+      background: var(--bg);
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 3px solid transparent;
+    }
+
+    .card:hover {
+      transform: translateY(-5px) rotate(-2deg);
+      border-color: var(--purple);
+      box-shadow: 0 10px 30px rgba(168,85,247,0.2);
+    }
+
+    .card.revealed-red {
+      background: var(--pink);
+      color: white;
+      animation: pop 0.3s ease;
+    }
+
+    .card.revealed-blue {
+      background: var(--blue);
+      color: white;
+      animation: pop 0.3s ease;
+    }
+
+    .card.revealed-neutral {
+      background: #ddd;
+      color: #888;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    .actions {
+      margin-top: 25px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .actions button {
+      background: white;
+      border: 3px solid var(--purple);
+      border-radius: 30px;
+      color: var(--purple);
+      padding: 14px 35px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .actions button:hover {
+      background: var(--purple);
+      color: white;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="confetti"></div>
+
+  <div class="container">
+    <header class="header">
+      <div class="logo">Codenames!</div>
+      <div class="scores">
+        <div class="score-bubble score-red">
+          <span class="score-dot"></span>
+          <span>Pink: 7/9</span>
+        </div>
+        <div class="score-bubble score-blue">
+          <span class="score-dot"></span>
+          <span>Teal: 6/8</span>
+        </div>
+      </div>
+      <div class="turn-pill">Pink Team's Turn!</div>
+    </header>
+
+    <div class="main-layout">
+      <aside class="sidebar">
+        <h2 class="section-title">Players</h2>
+        <ul class="player-list">
+          <li class="player-item">
+            <span class="player-avatar red">SM</span>
+            <div class="player-info">
+              <div class="player-name">Tanaka</div>
+              <div class="player-role">Spymaster</div>
+            </div>
+          </li>
+          <li class="player-item">
+            <span class="player-avatar red">OP</span>
+            <div class="player-info">
+              <div class="player-name">Yamada</div>
+              <div class="player-role">Operative</div>
+            </div>
+          </li>
+          <li class="player-item">
+            <span class="player-avatar blue">SM</span>
+            <div class="player-info">
+              <div class="player-name">Suzuki</div>
+              <div class="player-role">Spymaster</div>
+            </div>
+          </li>
+          <li class="player-item">
+            <span class="player-avatar blue">OP</span>
+            <div class="player-info">
+              <div class="player-name">Sato</div>
+              <div class="player-role">Operative</div>
+            </div>
+          </li>
+        </ul>
+      </aside>
+
+      <main class="game-area">
+        <div class="hint-section">
+          <div class="hint-label">Give a Hint!</div>
+          <div class="hint-form">
+            <input type="text" placeholder="Type your hint...">
+            <input type="number" value="2" style="width:70px;text-align:center;">
+            <button>Send!</button>
+          </div>
+        </div>
+
+        <div class="board">
+          <div class="card revealed-red">Tokyo</div>
+          <div class="card">Apple</div>
+          <div class="card revealed-blue">Ocean</div>
+          <div class="card">Mountain</div>
+          <div class="card">Train</div>
+          <div class="card">Book</div>
+          <div class="card revealed-red">Fire</div>
+          <div class="card">Water</div>
+          <div class="card revealed-neutral">Stone</div>
+          <div class="card">Moon</div>
+          <div class="card">Star</div>
+          <div class="card revealed-blue">Coffee</div>
+          <div class="card">Music</div>
+          <div class="card">Garden</div>
+          <div class="card">Bridge</div>
+          <div class="card revealed-red">Clock</div>
+          <div class="card">Window</div>
+          <div class="card">Cloud</div>
+          <div class="card">River</div>
+          <div class="card revealed-blue">Snow</div>
+          <div class="card">Forest</div>
+          <div class="card">Castle</div>
+          <div class="card">Dragon</div>
+          <div class="card">Light</div>
+          <div class="card">Shadow</div>
+        </div>
+
+        <div class="actions">
+          <button>End Turn</button>
+          <button>Refresh</button>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

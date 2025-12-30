@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 9: Art Deco</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poiret+One&family=Josefin+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #1a1a1a;
+      --gold: #d4af37;
+      --gold-light: #f4e4b5;
+      --cream: #f5f0e1;
+      --red: #8b2942;
+      --blue: #1e3a5f;
+    }
+
+    body {
+      font-family: 'Josefin Sans', sans-serif;
+      background: var(--bg);
+      color: var(--cream);
+      min-height: 100vh;
+    }
+
+    .deco-border {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+      border: 2px solid var(--gold);
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .deco-border::before,
+    .deco-border::after {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border: 2px solid var(--gold);
+    }
+
+    .deco-border::before {
+      top: -2px;
+      left: -2px;
+      border-right: none;
+      border-bottom: none;
+    }
+
+    .deco-border::after {
+      bottom: -2px;
+      right: -2px;
+      border-left: none;
+      border-top: none;
+    }
+
+    .container {
+      padding: 50px 60px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .logo {
+      font-family: 'Poiret One', cursive;
+      font-size: 56px;
+      color: var(--gold);
+      letter-spacing: 20px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .logo::before,
+    .logo::after {
+      content: '◆';
+      font-size: 20px;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .logo::before { left: -40px; }
+    .logo::after { right: -40px; }
+
+    .divider {
+      width: 300px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 20px auto;
+    }
+
+    .scores {
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      margin-top: 25px;
+    }
+
+    .score-item {
+      text-align: center;
+    }
+
+    .score-label {
+      font-size: 11px;
+      letter-spacing: 4px;
+      opacity: 0.6;
+      margin-bottom: 8px;
+    }
+
+    .score-value {
+      font-family: 'Poiret One', cursive;
+      font-size: 36px;
+    }
+
+    .score-red .score-value { color: #c77; }
+    .score-blue .score-value { color: #7ac; }
+
+    .turn-display {
+      margin-top: 20px;
+      font-size: 12px;
+      letter-spacing: 6px;
+      color: var(--gold);
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 50px;
+    }
+
+    .sidebar {
+      border-right: 1px solid rgba(212,175,55,0.3);
+      padding-right: 40px;
+    }
+
+    .section-title {
+      font-family: 'Poiret One', cursive;
+      font-size: 18px;
+      color: var(--gold);
+      letter-spacing: 4px;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .player-list {
+      list-style: none;
+    }
+
+    .player-item {
+      padding: 15px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(212,175,55,0.2);
+      text-align: center;
+      font-size: 14px;
+      position: relative;
+    }
+
+    .player-item::before {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      right: 5px;
+      bottom: 5px;
+      border: 1px solid rgba(212,175,55,0.1);
+    }
+
+    .player-role {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 3px;
+      opacity: 0.5;
+      margin-top: 5px;
+    }
+
+    .game-area {
+      padding-left: 20px;
+    }
+
+    .hint-panel {
+      background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(212,175,55,0.05));
+      border: 1px solid var(--gold);
+      padding: 30px;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .hint-panel::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      border: 1px solid rgba(212,175,55,0.3);
+    }
+
+    .hint-label {
+      font-family: 'Poiret One', cursive;
+      font-size: 16px;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: 4px;
+    }
+
+    .hint-form {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .hint-form input {
+      background: transparent;
+      border: 1px solid rgba(212,175,55,0.5);
+      padding: 15px 25px;
+      color: var(--cream);
+      font-family: inherit;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .hint-form input:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .hint-form button {
+      background: var(--gold);
+      border: none;
+      color: var(--bg);
+      padding: 15px 50px;
+      font-family: inherit;
+      font-size: 14px;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .hint-form button:hover {
+      background: var(--gold-light);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+    }
+
+    .card {
+      aspect-ratio: 4/3;
+      background: rgba(245,240,225,0.05);
+      border: 1px solid rgba(212,175,55,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+      border: 1px solid rgba(212,175,55,0.1);
+      transition: border-color 0.3s;
+    }
+
+    .card:hover {
+      border-color: var(--gold);
+    }
+
+    .card:hover::before {
+      border-color: rgba(212,175,55,0.3);
+    }
+
+    .card.revealed-red {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    .card.revealed-blue {
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .card.revealed-neutral {
+      background: rgba(100,100,100,0.3);
+      opacity: 0.5;
+    }
+
+    .actions {
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .actions button {
+      background: transparent;
+      border: 1px solid rgba(212,175,55,0.5);
+      color: var(--cream);
+      padding: 15px 40px;
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .actions button:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+  <div class="deco-border"></div>
+
+  <div class="container">
+    <header class="header">
+      <h1 class="logo">CODENAMES</h1>
+      <div class="divider"></div>
+      <div class="scores">
+        <div class="score-item score-red">
+          <div class="score-label">CRIMSON</div>
+          <div class="score-value">7 / 9</div>
+        </div>
+        <div class="score-item score-blue">
+          <div class="score-label">SAPPHIRE</div>
+          <div class="score-value">6 / 8</div>
+        </div>
+      </div>
+      <div class="turn-display">◆ CRIMSON'S TURN ◆</div>
+    </header>
+
+    <div class="main-layout">
+      <aside class="sidebar">
+        <h2 class="section-title">PLAYERS</h2>
+        <ul class="player-list">
+          <li class="player-item">Tanaka <span class="player-role">SPYMASTER</span></li>
+          <li class="player-item">Yamada <span class="player-role">OPERATIVE</span></li>
+          <li class="player-item">Suzuki <span class="player-role">SPYMASTER</span></li>
+          <li class="player-item">Sato <span class="player-role">OPERATIVE</span></li>
+        </ul>
+      </aside>
+
+      <main class="game-area">
+        <div class="hint-panel">
+          <div class="hint-label">◆ TRANSMIT HINT ◆</div>
+          <div class="hint-form">
+            <input type="text" placeholder="Enter word...">
+            <input type="number" value="2" style="width:80px;">
+            <button>SEND</button>
+          </div>
+        </div>
+
+        <div class="board">
+          <div class="card revealed-red">Tokyo</div>
+          <div class="card">Apple</div>
+          <div class="card revealed-blue">Ocean</div>
+          <div class="card">Mountain</div>
+          <div class="card">Train</div>
+          <div class="card">Book</div>
+          <div class="card revealed-red">Fire</div>
+          <div class="card">Water</div>
+          <div class="card revealed-neutral">Stone</div>
+          <div class="card">Moon</div>
+          <div class="card">Star</div>
+          <div class="card revealed-blue">Coffee</div>
+          <div class="card">Music</div>
+          <div class="card">Garden</div>
+          <div class="card">Bridge</div>
+          <div class="card revealed-red">Clock</div>
+          <div class="card">Window</div>
+          <div class="card">Cloud</div>
+          <div class="card">River</div>
+          <div class="card revealed-blue">Snow</div>
+          <div class="card">Forest</div>
+          <div class="card">Castle</div>
+          <div class="card">Dragon</div>
+          <div class="card">Light</div>
+          <div class="card">Shadow</div>
+        </div>
+
+        <div class="actions">
+          <button>END TURN</button>
+          <button>REFRESH</button>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

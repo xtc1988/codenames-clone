@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 6: Bauhaus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --white: #fefefe;
+      --black: #1a1a1a;
+      --red: #e63946;
+      --blue: #457b9d;
+      --yellow: #f4a261;
+    }
+
+    body {
+      font-family: 'Work Sans', sans-serif;
+      background: var(--white);
+      color: var(--black);
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--black);
+      color: var(--white);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 42px;
+      letter-spacing: 6px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo-circle {
+      width: 40px;
+      height: 40px;
+      background: var(--red);
+      border-radius: 50%;
+    }
+
+    .logo-triangle {
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 35px solid var(--yellow);
+    }
+
+    .logo-square {
+      width: 35px;
+      height: 35px;
+      background: var(--blue);
+    }
+
+    .scores {
+      display: flex;
+      gap: 40px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+    }
+
+    .score-red { color: var(--red); }
+    .score-blue { color: var(--blue); }
+
+    .turn-badge {
+      background: var(--yellow);
+      color: var(--black);
+      padding: 10px 30px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 3px;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 250px;
+      min-height: calc(100vh - 80px);
+    }
+
+    .game-section {
+      padding: 40px;
+      position: relative;
+    }
+
+    .game-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 150px;
+      height: 150px;
+      background: var(--yellow);
+      opacity: 0.3;
+    }
+
+    .hint-bar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hint-bar input {
+      flex: 1;
+      border: 3px solid var(--black);
+      padding: 15px 20px;
+      font-family: inherit;
+      font-size: 16px;
+    }
+
+    .hint-bar input:focus {
+      outline: none;
+      border-color: var(--red);
+    }
+
+    .hint-bar button {
+      background: var(--red);
+      border: none;
+      color: var(--white);
+      padding: 15px 40px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .hint-bar button:hover {
+      transform: scale(1.05);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+    }
+
+    .card {
+      aspect-ratio: 1;
+      background: var(--white);
+      border: 3px solid var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: rotate(-2deg) scale(1.05);
+    }
+
+    .card:nth-child(3n)::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      right: -8px;
+      width: 100%;
+      height: 100%;
+      border: 3px solid var(--black);
+      z-index: -1;
+    }
+
+    .card.revealed-red {
+      background: var(--red);
+      color: var(--white);
+      border-color: var(--red);
+    }
+
+    .card.revealed-blue {
+      background: var(--blue);
+      color: var(--white);
+      border-color: var(--blue);
+    }
+
+    .card.revealed-neutral {
+      background: #ddd;
+      border-color: #999;
+    }
+
+    .actions {
+      margin-top: 40px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .actions button {
+      flex: 1;
+      background: var(--white);
+      border: 3px solid var(--black);
+      padding: 15px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .actions button:hover {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .sidebar {
+      background: var(--blue);
+      color: var(--white);
+      padding: 40px 30px;
+      position: relative;
+    }
+
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100px;
+      height: 100px;
+      background: var(--red);
+      border-radius: 50%;
+      transform: translate(-50%, 50%);
+    }
+
+    .sidebar-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      letter-spacing: 4px;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .player-list {
+      list-style: none;
+      position: relative;
+      z-index: 1;
+    }
+
+    .player-item {
+      padding: 15px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      font-size: 15px;
+    }
+
+    .player-role {
+      display: block;
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 3px;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <span class="logo-circle"></span>
+      <span class="logo-triangle"></span>
+      <span class="logo-square"></span>
+      CODENAMES
+    </div>
+    <div class="scores">
+      <span class="score-red">RED 7/9</span>
+      <span class="score-blue">BLUE 6/8</span>
+    </div>
+    <div class="turn-badge">RED TURN</div>
+  </header>
+
+  <div class="container">
+    <main class="game-section">
+      <div class="hint-bar">
+        <input type="text" placeholder="Enter hint word...">
+        <input type="number" value="2" style="width:80px;">
+        <button>SEND HINT</button>
+      </div>
+
+      <div class="board">
+        <div class="card revealed-red">Tokyo</div>
+        <div class="card">Apple</div>
+        <div class="card revealed-blue">Ocean</div>
+        <div class="card">Mountain</div>
+        <div class="card">Train</div>
+        <div class="card">Book</div>
+        <div class="card revealed-red">Fire</div>
+        <div class="card">Water</div>
+        <div class="card revealed-neutral">Stone</div>
+        <div class="card">Moon</div>
+        <div class="card">Star</div>
+        <div class="card revealed-blue">Coffee</div>
+        <div class="card">Music</div>
+        <div class="card">Garden</div>
+        <div class="card">Bridge</div>
+        <div class="card revealed-red">Clock</div>
+        <div class="card">Window</div>
+        <div class="card">Cloud</div>
+        <div class="card">River</div>
+        <div class="card revealed-blue">Snow</div>
+        <div class="card">Forest</div>
+        <div class="card">Castle</div>
+        <div class="card">Dragon</div>
+        <div class="card">Light</div>
+        <div class="card">Shadow</div>
+      </div>
+
+      <div class="actions">
+        <button>PASS TURN</button>
+        <button>REFRESH</button>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <h2 class="sidebar-title">PLAYERS</h2>
+      <ul class="player-list">
+        <li class="player-item">Tanaka <span class="player-role">Spymaster - Red</span></li>
+        <li class="player-item">Yamada <span class="player-role">Operative - Red</span></li>
+        <li class="player-item">Suzuki <span class="player-role">Spymaster - Blue</span></li>
+        <li class="player-item">Sato <span class="player-role">Operative - Blue</span></li>
+      </ul>
+    </aside>
+  </div>
+</body>
+</html>

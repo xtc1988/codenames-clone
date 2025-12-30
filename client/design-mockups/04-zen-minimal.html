@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 4: Zen Minimal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #faf8f5;
+      --text: #2d2a26;
+      --red: #c45c48;
+      --blue: #4a6d7c;
+      --stone: #9c9488;
+      --sand: #e8e4db;
+    }
+
+    body {
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 60px 80px;
+      font-weight: 300;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 60px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--sand);
+    }
+
+    .logo {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 18px;
+      font-weight: 300;
+      letter-spacing: 12px;
+    }
+
+    .logo span {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--stone);
+      margin-top: 8px;
+    }
+
+    .status {
+      text-align: right;
+    }
+
+    .scores {
+      display: flex;
+      gap: 40px;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .score-red { color: var(--red); }
+    .score-blue { color: var(--blue); }
+
+    .turn {
+      font-size: 11px;
+      color: var(--stone);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      gap: 80px;
+    }
+
+    .board-area {
+      order: 1;
+    }
+
+    .sidebar {
+      order: 2;
+    }
+
+    .hint-area {
+      margin-bottom: 50px;
+    }
+
+    .hint-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--stone);
+      margin-bottom: 12px;
+    }
+
+    .hint-form {
+      display: flex;
+      gap: 12px;
+    }
+
+    .hint-form input {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--stone);
+      padding: 12px 0;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 300;
+      flex: 1;
+      color: var(--text);
+    }
+
+    .hint-form input:focus {
+      outline: none;
+      border-color: var(--text);
+    }
+
+    .hint-form input::placeholder {
+      color: var(--stone);
+    }
+
+    .hint-form button {
+      background: transparent;
+      border: 1px solid var(--text);
+      padding: 12px 30px;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .hint-form button:hover {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      aspect-ratio: 1;
+      background: var(--sand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      border-radius: 2px;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+
+    .card.revealed-red {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .card.revealed-blue {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .card.revealed-neutral {
+      background: var(--stone);
+      color: var(--bg);
+      opacity: 0.6;
+    }
+
+    .sidebar-section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--stone);
+      margin-bottom: 20px;
+    }
+
+    .player-list {
+      list-style: none;
+    }
+
+    .player-item {
+      font-size: 13px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--sand);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .player-role {
+      font-size: 10px;
+      color: var(--stone);
+    }
+
+    .actions {
+      margin-top: 50px;
+    }
+
+    .action-btn {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 15px;
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: var(--stone);
+      cursor: pointer;
+      text-align: left;
+      transition: color 0.3s;
+    }
+
+    .action-btn:hover {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      CODENAMES
+      <span>word guessing game</span>
+    </div>
+    <div class="status">
+      <div class="scores">
+        <span class="score-red">red 7/9</span>
+        <span class="score-blue">blue 6/8</span>
+      </div>
+      <div class="turn">red team's turn</div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main class="board-area">
+      <div class="hint-area">
+        <div class="hint-label">HINT</div>
+        <div class="hint-form">
+          <input type="text" placeholder="enter hint word">
+          <input type="number" value="2" style="width:60px;text-align:center;">
+          <button>send</button>
+        </div>
+      </div>
+
+      <div class="board">
+        <div class="card revealed-red">Tokyo</div>
+        <div class="card">Apple</div>
+        <div class="card revealed-blue">Ocean</div>
+        <div class="card">Mountain</div>
+        <div class="card">Train</div>
+        <div class="card">Book</div>
+        <div class="card revealed-red">Fire</div>
+        <div class="card">Water</div>
+        <div class="card revealed-neutral">Stone</div>
+        <div class="card">Moon</div>
+        <div class="card">Star</div>
+        <div class="card revealed-blue">Coffee</div>
+        <div class="card">Music</div>
+        <div class="card">Garden</div>
+        <div class="card">Bridge</div>
+        <div class="card revealed-red">Clock</div>
+        <div class="card">Window</div>
+        <div class="card">Cloud</div>
+        <div class="card">River</div>
+        <div class="card revealed-blue">Snow</div>
+        <div class="card">Forest</div>
+        <div class="card">Castle</div>
+        <div class="card">Dragon</div>
+        <div class="card">Light</div>
+        <div class="card">Shadow</div>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="section-title">PLAYERS</div>
+        <ul class="player-list">
+          <li class="player-item">Tanaka <span class="player-role">spymaster</span></li>
+          <li class="player-item">Yamada <span class="player-role">operative</span></li>
+          <li class="player-item">Suzuki <span class="player-role">spymaster</span></li>
+          <li class="player-item">Sato <span class="player-role">operative</span></li>
+        </ul>
+      </div>
+
+      <div class="actions">
+        <button class="action-btn">pass turn</button>
+        <button class="action-btn">refresh</button>
+      </div>
+    </aside>
+  </div>
+</body>
+</html>

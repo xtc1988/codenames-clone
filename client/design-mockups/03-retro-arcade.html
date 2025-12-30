@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 3: Retro Arcade</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #1a1a2e;
+      --neon-pink: #ff2e88;
+      --neon-cyan: #00fff5;
+      --neon-yellow: #ffff00;
+      --neon-green: #39ff14;
+    }
+
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .scanline {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.1),
+        rgba(0,0,0,0.1) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      z-index: 1000;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 20px;
+      border: 4px solid var(--neon-cyan);
+      box-shadow: 0 0 20px var(--neon-cyan), inset 0 0 20px rgba(0,255,245,0.1);
+    }
+
+    .title {
+      font-size: 28px;
+      color: var(--neon-yellow);
+      text-shadow: 0 0 10px var(--neon-yellow), 0 0 20px var(--neon-yellow);
+      margin-bottom: 15px;
+    }
+
+    .score-bar {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      font-size: 12px;
+    }
+
+    .score-red {
+      color: var(--neon-pink);
+      text-shadow: 0 0 10px var(--neon-pink);
+    }
+
+    .score-blue {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 10px var(--neon-cyan);
+    }
+
+    .turn-display {
+      margin-top: 15px;
+      font-size: 10px;
+      color: var(--neon-green);
+      text-shadow: 0 0 10px var(--neon-green);
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.3; }
+    }
+
+    .game-container {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 20px;
+    }
+
+    .sidebar {
+      border: 3px solid var(--neon-pink);
+      padding: 15px;
+      box-shadow: 0 0 15px var(--neon-pink);
+    }
+
+    .sidebar-title {
+      font-size: 8px;
+      color: var(--neon-yellow);
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .player {
+      font-size: 8px;
+      padding: 8px;
+      margin-bottom: 8px;
+      border: 2px solid;
+    }
+
+    .player.red {
+      border-color: var(--neon-pink);
+      color: var(--neon-pink);
+    }
+
+    .player.blue {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+
+    .game-area {
+      border: 3px solid var(--neon-green);
+      padding: 20px;
+      box-shadow: 0 0 15px var(--neon-green);
+    }
+
+    .hint-panel {
+      background: rgba(0,0,0,0.5);
+      border: 3px solid var(--neon-yellow);
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .hint-panel span {
+      font-size: 8px;
+      color: var(--neon-yellow);
+    }
+
+    .hint-panel input {
+      flex: 1;
+      background: #000;
+      border: 2px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      padding: 10px;
+      font-family: inherit;
+      font-size: 10px;
+    }
+
+    .hint-panel button {
+      background: var(--neon-pink);
+      border: none;
+      color: #000;
+      padding: 12px 25px;
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--neon-pink);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .card {
+      aspect-ratio: 4/3;
+      background: rgba(0,0,0,0.7);
+      border: 3px solid #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      padding: 5px;
+    }
+
+    .card:hover {
+      border-color: var(--neon-yellow);
+      box-shadow: 0 0 15px var(--neon-yellow);
+      transform: scale(1.05);
+    }
+
+    .card.revealed-red {
+      background: var(--neon-pink);
+      border-color: var(--neon-pink);
+      color: #000;
+      box-shadow: 0 0 20px var(--neon-pink);
+    }
+
+    .card.revealed-blue {
+      background: var(--neon-cyan);
+      border-color: var(--neon-cyan);
+      color: #000;
+      box-shadow: 0 0 20px var(--neon-cyan);
+    }
+
+    .card.revealed-neutral {
+      background: #333;
+      border-color: #666;
+      opacity: 0.5;
+    }
+
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .actions button {
+      flex: 1;
+      background: transparent;
+      border: 3px solid var(--neon-green);
+      color: var(--neon-green);
+      padding: 15px;
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
+      text-shadow: 0 0 5px var(--neon-green);
+    }
+
+    .actions button:hover {
+      background: var(--neon-green);
+      color: #000;
+      box-shadow: 0 0 20px var(--neon-green);
+    }
+
+    .insert-coin {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 10px;
+      color: var(--neon-yellow);
+      animation: blink 0.5s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="scanline"></div>
+
+  <header class="header">
+    <h1 class="title">CODENAMES</h1>
+    <div class="score-bar">
+      <span class="score-red">P1 RED: 7/9</span>
+      <span class="score-blue">P2 BLUE: 6/8</span>
+    </div>
+    <div class="turn-display">>>> RED TEAM TURN <<<</div>
+  </header>
+
+  <div class="game-container">
+    <aside class="sidebar">
+      <div class="sidebar-title">PLAYERS</div>
+      <div class="player red">TANAKA [SM]</div>
+      <div class="player red">YAMADA</div>
+      <div class="player blue">SUZUKI [SM]</div>
+      <div class="player blue">SATO</div>
+    </aside>
+
+    <main class="game-area">
+      <div class="hint-panel">
+        <span>HINT:</span>
+        <input type="text" placeholder="ENTER CODE...">
+        <input type="number" value="2" style="width:60px;">
+        <button>SEND!</button>
+      </div>
+
+      <div class="board">
+        <div class="card revealed-red">TOKYO</div>
+        <div class="card">APPLE</div>
+        <div class="card revealed-blue">OCEAN</div>
+        <div class="card">MOUNTAIN</div>
+        <div class="card">TRAIN</div>
+        <div class="card">BOOK</div>
+        <div class="card revealed-red">FIRE</div>
+        <div class="card">WATER</div>
+        <div class="card revealed-neutral">STONE</div>
+        <div class="card">MOON</div>
+        <div class="card">STAR</div>
+        <div class="card revealed-blue">COFFEE</div>
+        <div class="card">MUSIC</div>
+        <div class="card">GARDEN</div>
+        <div class="card">BRIDGE</div>
+        <div class="card revealed-red">CLOCK</div>
+        <div class="card">WINDOW</div>
+        <div class="card">CLOUD</div>
+        <div class="card">RIVER</div>
+        <div class="card revealed-blue">SNOW</div>
+        <div class="card">FOREST</div>
+        <div class="card">CASTLE</div>
+        <div class="card">DRAGON</div>
+        <div class="card">LIGHT</div>
+        <div class="card">SHADOW</div>
+      </div>
+
+      <div class="actions">
+        <button>PASS TURN</button>
+        <button>REFRESH</button>
+      </div>
+    </main>
+  </div>
+
+  <div class="insert-coin">INSERT COIN TO CONTINUE</div>
+</body>
+</html>

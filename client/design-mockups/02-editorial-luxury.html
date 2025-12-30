@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 2: Editorial Luxury</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0d0d0d;
+      --text: #f5f0e8;
+      --gold: #c9a962;
+      --gold-light: #e8d5a3;
+      --red: #8b3a3a;
+      --blue: #3a5a8b;
+    }
+
+    body {
+      font-family: 'Cormorant Garamond', serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 60px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--gold);
+      padding-bottom: 30px;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 400;
+      letter-spacing: 8px;
+      color: var(--gold);
+    }
+
+    .score-display {
+      display: flex;
+      gap: 60px;
+      font-size: 18px;
+      letter-spacing: 3px;
+    }
+
+    .score-item {
+      text-align: center;
+    }
+
+    .score-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      opacity: 0.6;
+      margin-bottom: 5px;
+    }
+
+    .score-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+    }
+
+    .score-red .score-value { color: #c77; }
+    .score-blue .score-value { color: #77a; }
+
+    .turn-badge {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--bg);
+      padding: 12px 35px;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 50px;
+    }
+
+    .sidebar {
+      border-right: 1px solid rgba(201,169,98,0.3);
+      padding-right: 40px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: var(--gold);
+      margin-bottom: 25px;
+    }
+
+    .player-list {
+      list-style: none;
+    }
+
+    .player-item {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      justify-content: space-between;
+      font-size: 15px;
+    }
+
+    .role-tag {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+
+    .hint-section {
+      background: rgba(201,169,98,0.08);
+      padding: 25px 30px;
+      margin-bottom: 35px;
+      border: 1px solid rgba(201,169,98,0.2);
+    }
+
+    .hint-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+      color: var(--gold);
+    }
+
+    .hint-form {
+      display: flex;
+      gap: 15px;
+    }
+
+    .hint-form input {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 14px 20px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 16px;
+      flex: 1;
+    }
+
+    .hint-form input:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .hint-form button {
+      background: var(--gold);
+      border: none;
+      color: var(--bg);
+      padding: 14px 40px;
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+    }
+
+    .card {
+      aspect-ratio: 3/2;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      background: rgba(201,169,98,0.1);
+      border-color: var(--gold);
+    }
+
+    .card.revealed-red {
+      background: var(--red);
+      border-color: transparent;
+    }
+
+    .card.revealed-blue {
+      background: var(--blue);
+      border-color: transparent;
+    }
+
+    .card.revealed-neutral {
+      background: rgba(255,255,255,0.1);
+      opacity: 0.5;
+    }
+
+    .footer-actions {
+      margin-top: 35px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .footer-actions button {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--text);
+      padding: 14px 45px;
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .footer-actions button:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">CODENAMES</div>
+    <div class="score-display">
+      <div class="score-item score-red">
+        <div class="score-label">Crimson</div>
+        <div class="score-value">7/9</div>
+      </div>
+      <div class="score-item score-blue">
+        <div class="score-label">Sapphire</div>
+        <div class="score-value">6/8</div>
+      </div>
+    </div>
+    <div class="turn-badge">Crimson's Turn</div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h2 class="section-title">Operatives</h2>
+      <ul class="player-list">
+        <li class="player-item">Tanaka <span class="role-tag">Spymaster</span></li>
+        <li class="player-item">Yamada <span class="role-tag">Agent</span></li>
+        <li class="player-item">Suzuki <span class="role-tag">Spymaster</span></li>
+        <li class="player-item">Sato <span class="role-tag">Agent</span></li>
+      </ul>
+    </aside>
+
+    <main>
+      <div class="hint-section">
+        <h3>Transmit Intelligence</h3>
+        <div class="hint-form">
+          <input type="text" placeholder="Enter classified hint...">
+          <input type="number" value="2" style="width:80px;">
+          <button>Transmit</button>
+        </div>
+      </div>
+
+      <div class="board">
+        <div class="card revealed-red">Tokyo</div>
+        <div class="card">Apple</div>
+        <div class="card revealed-blue">Ocean</div>
+        <div class="card">Mountain</div>
+        <div class="card">Train</div>
+        <div class="card">Book</div>
+        <div class="card revealed-red">Fire</div>
+        <div class="card">Water</div>
+        <div class="card revealed-neutral">Stone</div>
+        <div class="card">Moon</div>
+        <div class="card">Star</div>
+        <div class="card revealed-blue">Coffee</div>
+        <div class="card">Music</div>
+        <div class="card">Garden</div>
+        <div class="card">Bridge</div>
+        <div class="card revealed-red">Clock</div>
+        <div class="card">Window</div>
+        <div class="card">Cloud</div>
+        <div class="card">River</div>
+        <div class="card revealed-blue">Snow</div>
+        <div class="card">Forest</div>
+        <div class="card">Castle</div>
+        <div class="card">Dragon</div>
+        <div class="card">Light</div>
+        <div class="card">Shadow</div>
+      </div>
+
+      <div class="footer-actions">
+        <button>End Turn</button>
+        <button>Refresh Intel</button>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

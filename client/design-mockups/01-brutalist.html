@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 1: Brutalist</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #ffffff;
+      --text: #000000;
+      --red: #ff0000;
+      --blue: #0000ff;
+      --border: 3px solid #000;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .header {
+      border: var(--border);
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      background: #f0f0f0;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+
+    .score-box {
+      display: flex;
+      gap: 30px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .score-red { color: var(--red); }
+    .score-blue { color: var(--blue); }
+
+    .turn-indicator {
+      background: var(--red);
+      color: white;
+      padding: 8px 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+    }
+
+    .sidebar {
+      border: var(--border);
+      padding: 15px;
+    }
+
+    .sidebar h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    .player {
+      padding: 8px 0;
+      border-bottom: 1px solid #ccc;
+      font-size: 13px;
+    }
+
+    .player.red { border-left: 4px solid var(--red); padding-left: 10px; }
+    .player.blue { border-left: 4px solid var(--blue); padding-left: 10px; }
+
+    .game-area {
+      border: var(--border);
+      padding: 20px;
+    }
+
+    .hint-bar {
+      border: var(--border);
+      padding: 15px;
+      margin-bottom: 20px;
+      background: #ffff00;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .hint-bar input {
+      flex: 1;
+      border: 2px solid #000;
+      padding: 10px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .hint-bar button {
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 12px 30px;
+      font-family: inherit;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    .card {
+      aspect-ratio: 4/3;
+      border: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.1s;
+      background: #fff;
+    }
+
+    .card:hover {
+      background: #000;
+      color: #fff;
+    }
+
+    .card.revealed-red {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .card.revealed-blue {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .card.revealed-neutral {
+      background: #999;
+      color: #fff;
+    }
+
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .actions button {
+      flex: 1;
+      border: var(--border);
+      background: #fff;
+      padding: 15px;
+      font-family: inherit;
+      font-weight: 700;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .actions button:hover {
+      background: #000;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Codenames</h1>
+    <div class="score-box">
+      <span class="score-red">RED: 7/9</span>
+      <span class="score-blue">BLUE: 6/8</span>
+    </div>
+    <div class="turn-indicator">Red Team Turn</div>
+  </header>
+
+  <div class="main-content">
+    <aside class="sidebar">
+      <h2>Players</h2>
+      <div class="player red">Tanaka [SM]</div>
+      <div class="player red">Yamada</div>
+      <div class="player blue">Suzuki [SM]</div>
+      <div class="player blue">Sato</div>
+    </aside>
+
+    <main class="game-area">
+      <div class="hint-bar">
+        <span style="font-weight:700;">HINT:</span>
+        <input type="text" placeholder="Enter hint word...">
+        <input type="number" value="2" style="width:60px;">
+        <button>Send</button>
+      </div>
+
+      <div class="board">
+        <div class="card revealed-red">Tokyo</div>
+        <div class="card">Apple</div>
+        <div class="card revealed-blue">Ocean</div>
+        <div class="card">Mountain</div>
+        <div class="card">Train</div>
+        <div class="card">Book</div>
+        <div class="card revealed-red">Fire</div>
+        <div class="card">Water</div>
+        <div class="card revealed-neutral">Stone</div>
+        <div class="card">Moon</div>
+        <div class="card">Star</div>
+        <div class="card revealed-blue">Coffee</div>
+        <div class="card">Music</div>
+        <div class="card">Garden</div>
+        <div class="card">Bridge</div>
+        <div class="card revealed-red">Clock</div>
+        <div class="card">Window</div>
+        <div class="card">Cloud</div>
+        <div class="card">River</div>
+        <div class="card revealed-blue">Snow</div>
+        <div class="card">Forest</div>
+        <div class="card">Castle</div>
+        <div class="card">Dragon</div>
+        <div class="card">Light</div>
+        <div class="card">Shadow</div>
+      </div>
+
+      <div class="actions">
+        <button>Pass Turn</button>
+        <button>Refresh</button>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
