@@ -1,10 +1,20 @@
 // Supabase Edge Function: generate-hint
 // Generates AI hints for Codenames using Google Gemini API
+// Fallback: gemini-2.5-flash-lite → gemini-2.0-flash-lite → gemma-2-27b-it
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+
+// Model fallback chain (try in order if rate limited)
+const MODELS = [
+  "gemini-2.5-flash-preview-05-20",  // Gemini 2.5 Flash-Lite
+  "gemini-2.0-flash-lite",            // Gemini 2.0 Flash-Lite
+  "gemma-2-27b-it",                   // Gemma 2 27B
+];
+
+const getApiUrl = (model: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
 interface Card {
   word: string;
@@ -84,34 +94,67 @@ Remember:
 - Avoid hints that could lead to the assassin
 - Higher count = more efficient, but also riskier`;
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 256,
-        },
-      }),
-    });
+    // Try each model in order until one succeeds
+    let textResponse = "";
+    let lastError = "";
+    let usedModel = "";
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Gemini API error:", error);
-      throw new Error(`Gemini API error: ${response.status}`);
+    for (const model of MODELS) {
+      try {
+        console.log(`Trying model: ${model}`);
+
+        const response = await fetch(`${getApiUrl(model)}?key=${GEMINI_API_KEY}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: prompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 256,
+            },
+          }),
+        });
+
+        if (response.status === 429) {
+          // Rate limited - try next model
+          console.log(`Model ${model} rate limited (429), trying next...`);
+          lastError = `${model}: rate limited`;
+          continue;
+        }
+
+        if (!response.ok) {
+          const error = await response.text();
+          console.error(`Model ${model} error:`, error);
+          lastError = `${model}: ${response.status}`;
+          continue;
+        }
+
+        const data = await response.json();
+        textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+        if (textResponse) {
+          console.log(`Success with model: ${model}`);
+          usedModel = model;
+          break;
+        }
+      } catch (e) {
+        console.error(`Model ${model} exception:`, e);
+        lastError = `${model}: ${e instanceof Error ? e.message : "unknown"}`;
+        continue;
+      }
     }
 
-    const data = await response.json();
-    const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    if (!textResponse) {
+      throw new Error(`All models failed. Last error: ${lastError}`);
+    }
 
     // Extract JSON from response
     const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
@@ -135,7 +178,7 @@ Remember:
       );
     }
 
-    return new Response(JSON.stringify(hint), {
+    return new Response(JSON.stringify({ ...hint, model: usedModel }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
