@@ -326,6 +326,7 @@ export async function getGameData(roomId: string) {
                 role: h.player.role,
                 sessionId: h.player.session_id,
                 isHost: h.player.is_host,
+                isAI: h.player.is_ai || false,
                 spectatorView: h.player.spectator_view,
                 createdAt: h.player.created_at,
               }

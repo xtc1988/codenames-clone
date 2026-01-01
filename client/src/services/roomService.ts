@@ -106,6 +106,7 @@ export async function createRoom(params: {
         role: player.role,
         sessionId: player.session_id,
         isHost: player.is_host,
+        isAI: player.is_ai || false,
         spectatorView: player.spectator_view,
         createdAt: player.created_at,
       },
@@ -182,6 +183,7 @@ export async function getRoomByCode(code: string): Promise<Room | null> {
         role: p.role,
         sessionId: p.session_id,
         isHost: p.is_host,
+        isAI: p.is_ai || false,
         spectatorView: p.spectator_view,
         createdAt: p.created_at,
       })),
@@ -232,6 +234,7 @@ export async function joinRoom(params: {
         role: updated.role,
         sessionId: updated.session_id,
         isHost: updated.is_host,
+        isAI: updated.is_ai || false,
         spectatorView: updated.spectator_view,
         createdAt: updated.created_at,
       };
@@ -267,6 +270,7 @@ export async function joinRoom(params: {
       role: player.role,
       sessionId: player.session_id,
       isHost: player.is_host,
+      isAI: player.is_ai || false,
       spectatorView: player.spectator_view,
       createdAt: player.created_at,
     };
@@ -389,6 +393,7 @@ export async function updatePlayer(params: {
       role: data.role,
       sessionId: data.session_id,
       isHost: data.is_host,
+      isAI: data.is_ai || false,
       spectatorView: data.spectator_view,
       createdAt: data.created_at,
     };

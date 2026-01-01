@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getRoomByCode, updatePlayer } from '@/services/roomService';
+import { addAISpymaster, removeAISpymaster } from '@/services/aiService';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { Team, PlayerRole, Player } from '@/types';
@@ -16,152 +17,123 @@ export default function LobbyPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [aiLoading, setAiLoading] = useState<Team | null>(null);
 
-  // ルーム情報取得（useCallbackで安定化）
   const loadRoom = useCallback(async () => {
     if (!code) return;
-
     setLoading(true);
     setError('');
 
     try {
-      console.log('[LobbyPage] loadRoom開始 @', new Date().toISOString());
       const roomData = await getRoomByCode(code);
-
       if (!roomData) {
-        console.error('[LobbyPage] ルームが見つかりません');
         setError('ルームが見つかりません');
         setLoading(false);
         return;
       }
-
-      console.log('[LobbyPage] getRoomByCode結果:', {
-        playersCount: roomData.players?.length || 0,
-        players: roomData.players?.map(p => ({ id: p.id, nickname: p.nickname, team: p.team, role: p.role })),
-      });
-
       setRoom(roomData);
       setPlayers(roomData.players || []);
-
-      console.log('[LobbyPage] setPlayers完了');
     } catch (err) {
-      console.error('[LobbyPage] エラー:', err);
       setError('ルーム情報の取得に失敗しました');
     } finally {
       setLoading(false);
     }
   }, [code, setRoom, setPlayers]);
 
-  // Realtime統合
   const { broadcast } = useRealtime({
     roomCode: code || '',
-    onPlayerUpdated: useCallback((player: Player) => {
-      console.log('[LobbyPage] プレイヤー更新受信:', player);
-      // プレイヤーリストを再読み込み
-      loadRoom();
-    }, [loadRoom]),
-    onGameStarted: useCallback(() => {
-      console.log('[LobbyPage] ゲーム開始受信');
-      // ゲーム画面に遷移
-      navigate(`/room/${code}/game`);
-    }, [navigate, code]),
+    onPlayerUpdated: useCallback(() => { loadRoom(); }, [loadRoom]),
+    onGameStarted: useCallback(() => { navigate(`/room/${code}/game`); }, [navigate, code]),
   });
 
-  // ルーム情報取得
   useEffect(() => {
     if (!code) {
       setError('ルームコードが指定されていません');
       setLoading(false);
       return;
     }
-
     loadRoom();
   }, [code, loadRoom]);
 
-  // チーム変更
   const handleTeamChange = async (team: Team) => {
     if (!currentPlayer || !code) return;
-
     try {
       const updated = await updatePlayer({
         playerId: currentPlayer.id,
         team,
         role: team === Team.SPECTATOR ? null : currentPlayer.role,
       });
-
       setCurrentPlayer(updated);
-
-      // players配列を即座に更新（楽観的更新）
       const existingPlayer = players.find((p: Player) => p.id === updated.id);
       if (existingPlayer) {
-        // 既存プレイヤーの更新
         updatePlayerInStore(updated.id, updated);
       } else {
-        // 新規プレイヤーの追加
         addPlayer(updated);
       }
-
-      // バックグラウンドでloadRoomを呼んで検証
       loadRoom();
-
-      // Broadcast送信
       await broadcast('player_updated', updated);
     } catch (err) {
-      console.error('[LobbyPage] チーム変更エラー:', err);
       setError('チーム変更に失敗しました');
     }
   };
 
-  // チーム+役割を同時に変更（race condition回避）
   const handleTeamAndRoleChange = async (team: Team, role: PlayerRole | null) => {
     if (!currentPlayer || !code) return;
-
     try {
       const updated = await updatePlayer({
         playerId: currentPlayer.id,
         team,
         role: team === Team.SPECTATOR ? null : role,
       });
-
       setCurrentPlayer(updated);
-
-      // players配列を即座に更新（楽観的更新）
       const existingPlayer = players.find((p: Player) => p.id === updated.id);
       if (existingPlayer) {
-        // 既存プレイヤーの更新
         updatePlayerInStore(updated.id, updated);
       } else {
-        // 新規プレイヤーの追加
         addPlayer(updated);
       }
-
-      // バックグラウンドでloadRoomを呼んで検証
       loadRoom();
-
-      // Broadcast送信
       await broadcast('player_updated', updated);
     } catch (err) {
-      console.error('[LobbyPage] チーム・役割変更エラー:', err);
       setError('チーム・役割変更に失敗しました');
     }
   };
 
-  // ゲーム開始条件チェック
+  const handleAddAISpymaster = async (team: Team) => {
+    if (!room || !code) return;
+    setAiLoading(team);
+    setError('');
+    try {
+      const aiPlayer = await addAISpymaster(room.id, team);
+      addPlayer(aiPlayer);
+      await broadcast('player_updated', aiPlayer);
+      await loadRoom();
+    } catch (err) {
+      setError('AIスパイマスターの追加に失敗しました');
+    } finally {
+      setAiLoading(null);
+    }
+  };
+
+  const handleRemoveAISpymaster = async (playerId: string) => {
+    if (!code) return;
+    setError('');
+    try {
+      await removeAISpymaster(playerId);
+      await loadRoom();
+      await broadcast('player_updated', { id: playerId, removed: true });
+    } catch (err) {
+      setError('AIスパイマスターの削除に失敗しました');
+    }
+  };
+
   const canStartGame = (): boolean => {
     if (!currentPlayer?.isHost) return false;
-
     const redPlayers = players.filter((p) => p.team === Team.RED);
     const bluePlayers = players.filter((p) => p.team === Team.BLUE);
-
     const redSpymaster = redPlayers.find((p) => p.role === PlayerRole.SPYMASTER);
     const blueSpymaster = bluePlayers.find((p) => p.role === PlayerRole.SPYMASTER);
-
-    return (
-      redPlayers.length >= 1 &&
-      bluePlayers.length >= 1 &&
-      !!redSpymaster &&
-      !!blueSpymaster
-    );
+    return redPlayers.length >= 1 && bluePlayers.length >= 1 && !!redSpymaster && !!blueSpymaster;
   };
 
   const handleStartGame = async () => {
@@ -169,37 +141,24 @@ export default function LobbyPage() {
       setError('ゲームを開始できません。各チームに1人以上のプレイヤーとスパイマスターが必要です。');
       return;
     }
-
     try {
-      // ホストがカードを生成してゲームを開始
-      console.log('[LobbyPage] ゲーム開始処理開始（ホスト）');
       const { startGame } = await import('@/services/gameService');
       await startGame(room.id, room.wordPackId);
-      console.log('[LobbyPage] カード生成完了');
-
-      // ゲーム開始通知をBroadcast
-      await broadcast('game_started', {
-        roomCode: code,
-        timestamp: new Date().toISOString(),
-      });
-
-      // ゲーム画面に遷移
+      await broadcast('game_started', { roomCode: code, timestamp: new Date().toISOString() });
       navigate(`/room/${code}/game`);
     } catch (err) {
-      console.error('[LobbyPage] ゲーム開始エラー:', err);
       setError('ゲームの開始に失敗しました');
     }
   };
 
-  // チーム別プレイヤー分類
   const redPlayers = players.filter((p) => p.team === Team.RED);
   const bluePlayers = players.filter((p) => p.team === Team.BLUE);
   const spectators = players.filter((p) => p.team === Team.SPECTATOR);
-
   const redSpymaster = redPlayers.find((p) => p.role === PlayerRole.SPYMASTER);
   const blueSpymaster = bluePlayers.find((p) => p.role === PlayerRole.SPYMASTER);
   const redOperatives = redPlayers.filter((p) => p.role === PlayerRole.OPERATIVE);
   const blueOperatives = bluePlayers.filter((p) => p.role === PlayerRole.OPERATIVE);
+  const isAI = (player: Player | undefined) => player?.isAI === true;
 
   if (loading) {
     return (
@@ -214,9 +173,7 @@ export default function LobbyPage() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card max-w-md">
           <p className="text-team-berry mb-4">{error}</p>
-          <Link to="/" className="btn-primary inline-block">
-            トップに戻る
-          </Link>
+          <Link to="/" className="btn-primary inline-block">トップに戻る</Link>
         </div>
       </div>
     );
@@ -225,196 +182,166 @@ export default function LobbyPage() {
   return (
     <div className="min-h-screen p-4 bg-forest-bg">
       <div className="max-w-6xl mx-auto">
-        {/* ヘッダー */}
         <div className="mb-6 flex items-center justify-between">
-          <Link to="/" className="text-team-sky hover:underline text-sm">
-            ← トップに戻る
-          </Link>
+          <Link to="/" className="text-team-sky hover:underline text-sm">← トップに戻る</Link>
           <div className="flex items-center gap-4">
             <div className="text-sm text-neutral-muted">
               ルームコード:
-              <span className="ml-2 px-3 py-1 bg-team-sky/20 text-team-sky-dark font-mono rounded">
-                {room?.code}
-              </span>
+              <span className="ml-2 px-3 py-1 bg-team-sky/20 text-team-sky-dark font-mono rounded">{room?.code}</span>
             </div>
-            <button onClick={loadRoom} className="btn-secondary text-sm px-3 py-1">
-              🔄 更新
-            </button>
+            <button onClick={loadRoom} className="btn-secondary text-sm px-3 py-1">更新</button>
           </div>
         </div>
 
         <h1 className="text-3xl font-bold mb-2">{room?.name}</h1>
-        <p className="text-neutral-muted mb-6">
-          単語パック: {room?.wordPack?.name || '読み込み中...'}
-        </p>
+        <p className="text-neutral-muted mb-6">単語パック: {room?.wordPack?.name || '読み込み中...'}</p>
 
         {error && (
-          <div className="mb-4 p-3 bg-team-berry/10 border border-team-berry/30 text-team-berry rounded">
-            {error}
-          </div>
+          <div className="mb-4 p-3 bg-team-berry/10 border border-team-berry/30 text-team-berry rounded">{error}</div>
         )}
 
-        {/* チーム選択 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* 赤チーム */}
+          {/* Berry Team */}
           <div className="card bg-team-berry/10 border-2 border-team-berry/30">
-            <h2 className="text-xl font-bold text-team-berry mb-4">🔴 赤チーム</h2>
-
-            {/* スパイマスター */}
+            <h2 className="text-xl font-bold text-team-berry mb-4">Berry Team</h2>
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-forest-bark mb-2">👑 スパイマスター</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">Spymaster</h3>
               {redSpymaster ? (
-                <div className="p-2 bg-white rounded border border-team-berry/20">
-                  {redSpymaster.nickname}
-                  {redSpymaster.id === currentPlayer?.id && ' (あなた)'}
+                <div className="p-2 bg-white rounded border border-team-berry/20 flex items-center justify-between">
+                  <span>
+                    {isAI(redSpymaster) && <span className="mr-1">🤖</span>}
+                    {redSpymaster.nickname}
+                    {redSpymaster.id === currentPlayer?.id && ' (あなた)'}
+                  </span>
+                  {isAI(redSpymaster) && currentPlayer?.isHost && (
+                    <button onClick={() => handleRemoveAISpymaster(redSpymaster.id)} className="text-team-berry text-xs hover:underline">削除</button>
+                  )}
                 </div>
               ) : (
-                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
-                  (空き)
+                <div className="space-y-2">
+                  <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">(空き)</div>
+                  {currentPlayer?.isHost && (
+                    <button
+                      onClick={() => handleAddAISpymaster(Team.RED)}
+                      disabled={aiLoading === Team.RED}
+                      className="w-full text-sm py-2 px-3 bg-forest-primary/10 text-forest-primary border border-forest-primary/30 rounded hover:bg-forest-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {aiLoading === Team.RED ? '読み込み中...' : '🤖 AIスパイマスターを追加'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
-
-            {/* オペレーティブ */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-forest-bark mb-2">🔍 オペレーティブ</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">Operatives</h3>
               {redOperatives.length > 0 ? (
                 <div className="space-y-1">
                   {redOperatives.map((p) => (
                     <div key={p.id} className="p-2 bg-white rounded border border-team-berry/20 text-sm">
-                      {p.nickname}
-                      {p.id === currentPlayer?.id && ' (あなた)'}
+                      {p.nickname}{p.id === currentPlayer?.id && ' (あなた)'}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
-                  (なし)
-                </div>
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">(なし)</div>
               )}
             </div>
-
-            {/* 選択ボタン */}
             {currentPlayer && (
               <div className="space-y-2">
                 <button
                   onClick={() => handleTeamAndRoleChange(Team.RED, PlayerRole.SPYMASTER)}
-                  disabled={!!redSpymaster && redSpymaster.id !== currentPlayer.id}
+                  disabled={(!!redSpymaster && redSpymaster.id !== currentPlayer.id) || isAI(redSpymaster)}
                   className="btn-secondary w-full text-sm disabled:opacity-50"
-                >
-                  スパイマスターになる
-                </button>
-                <button
-                  onClick={() => handleTeamAndRoleChange(Team.RED, PlayerRole.OPERATIVE)}
-                  className="btn-secondary w-full text-sm"
-                >
-                  オペレーティブになる
-                </button>
+                >スパイマスターになる</button>
+                <button onClick={() => handleTeamAndRoleChange(Team.RED, PlayerRole.OPERATIVE)} className="btn-secondary w-full text-sm">オペレーティブになる</button>
               </div>
             )}
           </div>
 
-          {/* 青チーム */}
+          {/* Sky Team */}
           <div className="card bg-team-sky/10 border-2 border-team-sky/30">
-            <h2 className="text-xl font-bold text-team-sky mb-4">🔵 青チーム</h2>
-
-            {/* スパイマスター */}
+            <h2 className="text-xl font-bold text-team-sky mb-4">Sky Team</h2>
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-forest-bark mb-2">👑 スパイマスター</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">Spymaster</h3>
               {blueSpymaster ? (
-                <div className="p-2 bg-white rounded border border-team-sky/20">
-                  {blueSpymaster.nickname}
-                  {blueSpymaster.id === currentPlayer?.id && ' (あなた)'}
+                <div className="p-2 bg-white rounded border border-team-sky/20 flex items-center justify-between">
+                  <span>
+                    {isAI(blueSpymaster) && <span className="mr-1">🤖</span>}
+                    {blueSpymaster.nickname}
+                    {blueSpymaster.id === currentPlayer?.id && ' (あなた)'}
+                  </span>
+                  {isAI(blueSpymaster) && currentPlayer?.isHost && (
+                    <button onClick={() => handleRemoveAISpymaster(blueSpymaster.id)} className="text-team-sky text-xs hover:underline">削除</button>
+                  )}
                 </div>
               ) : (
-                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
-                  (空き)
+                <div className="space-y-2">
+                  <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">(空き)</div>
+                  {currentPlayer?.isHost && (
+                    <button
+                      onClick={() => handleAddAISpymaster(Team.BLUE)}
+                      disabled={aiLoading === Team.BLUE}
+                      className="w-full text-sm py-2 px-3 bg-forest-primary/10 text-forest-primary border border-forest-primary/30 rounded hover:bg-forest-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {aiLoading === Team.BLUE ? '読み込み中...' : '🤖 AIスパイマスターを追加'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
-
-            {/* オペレーティブ */}
             <div className="mb-4">
-              <h3 className="font-semibold text-sm text-forest-bark mb-2">🔍 オペレーティブ</h3>
+              <h3 className="font-semibold text-sm text-forest-bark mb-2">Operatives</h3>
               {blueOperatives.length > 0 ? (
                 <div className="space-y-1">
                   {blueOperatives.map((p) => (
                     <div key={p.id} className="p-2 bg-white rounded border border-team-sky/20 text-sm">
-                      {p.nickname}
-                      {p.id === currentPlayer?.id && ' (あなた)'}
+                      {p.nickname}{p.id === currentPlayer?.id && ' (あなた)'}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">
-                  (なし)
-                </div>
+                <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm">(なし)</div>
               )}
             </div>
-
-            {/* 選択ボタン */}
             {currentPlayer && (
               <div className="space-y-2">
                 <button
                   onClick={() => handleTeamAndRoleChange(Team.BLUE, PlayerRole.SPYMASTER)}
-                  disabled={!!blueSpymaster && blueSpymaster.id !== currentPlayer.id}
+                  disabled={(!!blueSpymaster && blueSpymaster.id !== currentPlayer.id) || isAI(blueSpymaster)}
                   className="btn-secondary w-full text-sm disabled:opacity-50"
-                >
-                  スパイマスターになる
-                </button>
-                <button
-                  onClick={() => handleTeamAndRoleChange(Team.BLUE, PlayerRole.OPERATIVE)}
-                  className="btn-secondary w-full text-sm"
-                >
-                  オペレーティブになる
-                </button>
+                >スパイマスターになる</button>
+                <button onClick={() => handleTeamAndRoleChange(Team.BLUE, PlayerRole.OPERATIVE)} className="btn-secondary w-full text-sm">オペレーティブになる</button>
               </div>
             )}
           </div>
 
-          {/* 観戦者 */}
+          {/* Spectators */}
           <div className="card bg-forest-bg border-2 border-neutral-soft">
-            <h2 className="text-xl font-bold text-forest-bark mb-4">👁 観戦者</h2>
+            <h2 className="text-xl font-bold text-forest-bark mb-4">Spectators</h2>
             {spectators.length > 0 ? (
               <div className="space-y-1 mb-4">
                 {spectators.map((p) => (
                   <div key={p.id} className="p-2 bg-white rounded border border-neutral-soft text-sm">
-                    {p.nickname}
-                    {p.id === currentPlayer?.id && ' (あなた)'}
+                    {p.nickname}{p.id === currentPlayer?.id && ' (あなた)'}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm mb-4">
-                (なし)
-              </div>
+              <div className="p-2 bg-forest-cream rounded text-neutral-muted text-sm mb-4">(なし)</div>
             )}
-
             {currentPlayer && (
-              <button
-                onClick={() => handleTeamChange(Team.SPECTATOR)}
-                className="btn-secondary w-full text-sm"
-              >
-                観戦者になる
-              </button>
+              <button onClick={() => handleTeamChange(Team.SPECTATOR)} className="btn-secondary w-full text-sm">観戦者になる</button>
             )}
           </div>
         </div>
 
-        {/* ゲーム開始ボタン */}
         {currentPlayer?.isHost && (
           <div className="card bg-forest-moss/10 border-2 border-forest-moss/30">
-            <button
-              onClick={handleStartGame}
-              disabled={!canStartGame()}
-              className="btn-primary w-full text-lg py-4 disabled:bg-neutral-warm"
-            >
-              🎮 ゲームを開始する
+            <button onClick={handleStartGame} disabled={!canStartGame()} className="btn-primary w-full text-lg py-4 disabled:bg-neutral-warm">
+              ゲームを開始する
             </button>
             {!canStartGame() && (
-              <p className="text-sm text-team-berry mt-2 text-center">
-                各チームに1人以上のプレイヤーとスパイマスターが必要です
-              </p>
+              <p className="text-sm text-team-berry mt-2 text-center">各チームに1人以上のプレイヤーとスパイマスターが必要です</p>
             )}
           </div>
         )}
