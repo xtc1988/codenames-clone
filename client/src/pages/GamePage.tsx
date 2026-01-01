@@ -67,7 +67,7 @@ export default function GamePage() {
   const { code } = useParams<{ code: string }>();
   const currentPlayer = usePlayerStore((state) => state.currentPlayer);
   const { room, setRoom, setPlayers, players } = useRoomStore();
-  const { cards, hints, currentTurn, winner, setCards, setHints, setCurrentTurn, setWinner } = useGameStore();
+  const { cards, hints, currentTurn, winner, setCards, setHints, addHint, setCurrentTurn, setWinner } = useGameStore();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -109,8 +109,15 @@ export default function GamePage() {
     const aiSpymaster = getAISpymaster(players, currentTurn);
     if (!aiSpymaster) return;
 
+    // Check if hint already exists for current turn (latest hint is from current team)
+    const latestHint = hints[0];
+    if (latestHint && latestHint.team === currentTurn) {
+      console.log('[GamePage] Hint already given for this turn, skipping AI generation');
+      return;
+    }
+
     // Prevent duplicate hint generation for same turn
-    const turnKey = `${currentTurn}-${hints.length}`;
+    const turnKey = `${currentTurn}`;
     if (aiHintProcessed.current === turnKey) return;
     aiHintProcessed.current = turnKey;
 
@@ -131,7 +138,7 @@ export default function GamePage() {
         team: currentTurn,
       });
 
-      setHints([hint, ...hints]);
+      addHint(hint);
       await broadcastHintGiven(code, hint);
     } catch (err) {
       console.error('[GamePage] AI hint generation error:', err);
@@ -140,7 +147,12 @@ export default function GamePage() {
     } finally {
       setAiGenerating(false);
     }
-  }, [room, code, currentTurn, winner, cards, players, hints]);
+  }, [room, code, currentTurn, winner, cards, players]);
+
+  // Reset AI hint processed flag when turn changes
+  useEffect(() => {
+    aiHintProcessed.current = null;
+  }, [currentTurn]);
 
   // Trigger AI hint when it's AI's turn
   useEffect(() => {
