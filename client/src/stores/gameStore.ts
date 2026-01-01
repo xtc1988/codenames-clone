@@ -28,7 +28,7 @@ export const useGameStore = create<GameState>((set) => ({
 
   addHint: (hint) =>
     set((state) => ({
-      hints: [...state.hints, hint],
+      hints: [hint, ...state.hints],
     })),
 
   setCurrentTurn: (turn) => set({ currentTurn: turn }),

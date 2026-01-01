@@ -1,10 +1,20 @@
 // Supabase Edge Function: generate-hint
 // Generates AI hints for Codenames using Google Gemini API
+// Fallback: gemini-2.5-flash → gemini-2.0-flash-lite → gemini-2.0-flash
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+
+// Model fallback chain (try in order if rate limited)
+const MODELS = [
+  "gemini-2.5-flash",       // Gemini 2.5 Flash (primary)
+  "gemini-2.0-flash-lite",  // Gemini 2.0 Flash Lite (fallback 1)
+  "gemini-2.0-flash",       // Gemini 2.0 Flash (fallback 2)
+];
+
+const getApiUrl = (model: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
 interface Card {
   word: string;
@@ -20,7 +30,6 @@ interface RequestBody {
 interface HintResponse {
   word: string;
   count: number;
-  reason: string;
 }
 
 const corsHeaders = {
@@ -55,71 +64,111 @@ serve(async (req: Request) => {
       );
     }
 
-    const prompt = `You are a Spymaster in the board game Codenames. Your task is to give a one-word hint that connects multiple words on your team.
+    const prompt = `Codenames Spymaster. Give ONE word hint.
 
-RULES:
-1. Give exactly ONE WORD as a hint
-2. The word must NOT be any word on the board
-3. The word must NOT be a proper noun, foreign word, or compound word
-4. The number indicates how many of your cards relate to the hint
-5. Your hint should connect as many of YOUR cards as possible while avoiding DANGER cards
+YOUR CARDS: ${myCards.map((c) => c.word).join(", ")}
+AVOID: ${enemyCards.map((c) => c.word).join(", ")}${assassin ? `, ASSASSIN: ${assassin.word}` : ""}
 
-YOUR TEAM'S CARDS (you want your teammates to guess these):
-${myCards.map((c) => c.word).join(", ")}
+Reply JSON only: {"word":"HINT","count":N}`;
 
-ENEMY TEAM'S CARDS (avoid these - if guessed, helps opponent):
-${enemyCards.map((c) => c.word).join(", ")}
+    // Try each model in order until one succeeds
+    let textResponse = "";
+    let lastError = "";
+    let usedModel = "";
 
-NEUTRAL CARDS (avoid these - ends turn if guessed):
-${neutralCards.map((c) => c.word).join(", ")}
+    for (const model of MODELS) {
+      try {
+        console.log(`Trying model: ${model}`);
 
-ASSASSIN (CRITICAL - if guessed, your team LOSES):
-${assassin ? assassin.word : "already revealed"}
-
-Think carefully and respond with ONLY a JSON object in this exact format:
-{"word": "YOUR_HINT", "count": NUMBER, "reason": "brief explanation"}
-
-Remember:
-- The hint word must NOT appear on the board
-- Avoid hints that could lead to the assassin
-- Higher count = more efficient, but also riskier`;
-
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }],
+        const response = await fetch(`${getApiUrl(model)}?key=${GEMINI_API_KEY}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 256,
-        },
-      }),
-    });
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: prompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.5,
+              maxOutputTokens: 2048,
+            },
+          }),
+        });
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Gemini API error:", error);
-      throw new Error(`Gemini API error: ${response.status}`);
+        if (response.status === 429) {
+          // Rate limited - try next model
+          console.log(`Model ${model} rate limited (429), trying next...`);
+          lastError = `${model}: rate limited`;
+          continue;
+        }
+
+        if (!response.ok) {
+          const error = await response.text();
+          console.error(`Model ${model} error:`, error);
+          lastError = `${model}: ${response.status}`;
+          continue;
+        }
+
+        const data = await response.json();
+        const candidate = data.candidates?.[0];
+        const finishReason = candidate?.finishReason;
+        textResponse = candidate?.content?.parts?.[0]?.text || "";
+
+        console.log(`Model ${model}: finishReason=${finishReason}, len=${textResponse.length}`);
+        console.log(`Text: ${textResponse}`);
+
+        // If response is truncated, try next model
+        if (finishReason !== "STOP" || !textResponse) {
+          console.log(`Model ${model} incomplete: ${finishReason}`);
+          lastError = `${model}: ${finishReason || "empty response"}`;
+          continue;
+        }
+
+        usedModel = model;
+        break;
+      } catch (e) {
+        console.error(`Model ${model} exception:`, e);
+        lastError = `${model}: ${e instanceof Error ? e.message : "unknown"}`;
+        continue;
+      }
     }
 
-    const data = await response.json();
-    const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    if (!textResponse) {
+      throw new Error(`All models failed. Last error: ${lastError}`);
+    }
 
     // Extract JSON from response
-    const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to parse AI response");
-    }
+    console.log("AI raw response:", textResponse);
+    console.log("Response length:", textResponse.length);
 
-    const hint: HintResponse = JSON.parse(jsonMatch[0]);
+    // Clean up the response - remove code blocks
+    let cleanedResponse = textResponse
+      .replace(/```json\s*/gi, "")
+      .replace(/```\s*/g, "")
+      .trim();
+
+    let hint: HintResponse;
+    try {
+      // First try: direct parse (for responseMimeType: json)
+      hint = JSON.parse(cleanedResponse);
+    } catch {
+      // Second try: extract JSON with regex
+      const jsonMatch = cleanedResponse.match(/\{[^{}]*"word"[^{}]*"count"[^{}]*"reason"[^{}]*\}/);
+      if (jsonMatch) {
+        try {
+          hint = JSON.parse(jsonMatch[0]);
+        } catch (e) {
+          console.error("Regex match parse failed:", e);
+          throw new Error(`Failed to parse: ${cleanedResponse}`);
+        }
+      } else {
+        console.error("No JSON found in:", cleanedResponse);
+        throw new Error(`Failed to parse AI response: ${cleanedResponse.substring(0, 300)}`);
+      }
+    }
 
     // Validate hint is not on the board
     const allWords = cards.map((c) => c.word.toLowerCase());
@@ -135,7 +184,7 @@ Remember:
       );
     }
 
-    return new Response(JSON.stringify(hint), {
+    return new Response(JSON.stringify({ ...hint, model: usedModel }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
