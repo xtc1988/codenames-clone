@@ -177,26 +177,38 @@ export default function GamePage() {
     return opponentPlayers.length === 0;
   }, [currentPlayer, players]);
 
-  // Auto-skip opponent turn in practice mode
+  // Auto-skip opponent turn in practice mode (after AI hint is generated)
   useEffect(() => {
     if (loading || !currentTurn || winner || !room || !code) return;
     if (!currentPlayer || currentPlayer.team === Team.SPECTATOR) return;
 
     const myTeam = currentPlayer.team;
     if (currentTurn !== myTeam && isPracticeMode()) {
-      console.log('[GamePage] Practice mode: auto-skipping opponent turn');
-      const timer = setTimeout(async () => {
-        try {
-          const nextTurn = await passTurn(room.id, currentTurn);
-          setCurrentTurn(nextTurn);
-          await broadcastTurnChanged(code, nextTurn);
-        } catch (err) {
-          console.error('[GamePage] Auto-skip error:', err);
-        }
-      }, 500);
-      return () => clearTimeout(timer);
+      console.log('[GamePage] Practice mode: opponent turn detected');
+
+      // Check if opponent AI has already given hint for this turn
+      const latestHint = hints[0];
+      const opponentHintGiven = latestHint && latestHint.team === currentTurn;
+
+      if (opponentHintGiven) {
+        // AI has given hint, now auto-skip after showing it briefly
+        console.log('[GamePage] Opponent AI hint exists, auto-skipping after delay');
+        const timer = setTimeout(async () => {
+          try {
+            const nextTurn = await passTurn(room.id, currentTurn);
+            setCurrentTurn(nextTurn);
+            await broadcastTurnChanged(code, nextTurn);
+          } catch (err) {
+            console.error('[GamePage] Auto-skip error:', err);
+          }
+        }, 2000); // 2秒待ってからスキップ（AIのヒントを見せる）
+        return () => clearTimeout(timer);
+      } else {
+        // Wait for AI to generate hint first
+        console.log('[GamePage] Waiting for opponent AI to generate hint...');
+      }
     }
-  }, [currentTurn, currentPlayer, loading, winner, room, code, isPracticeMode]);
+  }, [currentTurn, currentPlayer, loading, winner, room, code, isPracticeMode, hints]);
 
   async function loadGameData() {
     if (!code) return;
