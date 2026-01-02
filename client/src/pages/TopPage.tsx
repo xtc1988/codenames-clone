@@ -11,6 +11,13 @@ export default function TopPage() {
 
         <div className="space-y-4">
           <Link
+            to="/solo"
+            className="block w-full bg-gradient-to-r from-forest-primary to-forest-moss text-white text-center text-lg py-4 rounded-lg font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+          >
+            🤖 1人モード（AIと対戦）
+          </Link>
+
+          <Link
             to="/create"
             className="block w-full btn-primary text-center text-lg py-3"
           >

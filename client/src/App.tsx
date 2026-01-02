@@ -8,12 +8,14 @@ import GamePage from '@/pages/GamePage';
 import WordPackListPage from '@/pages/WordPackListPage';
 import WordPackCreatePage from '@/pages/WordPackCreatePage';
 import WordPackEditPage from '@/pages/WordPackEditPage';
+import SoloModePage from '@/pages/SoloModePage';
 
 function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Routes>
         <Route path="/" element={<TopPage />} />
+        <Route path="/solo" element={<SoloModePage />} />
         <Route path="/create" element={<CreateRoomPage />} />
         <Route path="/join" element={<JoinRoomPage />} />
         <Route path="/rooms" element={<RoomListPage />} />
