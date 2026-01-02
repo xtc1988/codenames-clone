@@ -289,11 +289,29 @@ export default function GamePage() {
   };
 
   const isSpymaster = currentPlayer?.role === PlayerRole.SPYMASTER;
+  const isOperative = currentPlayer?.role === PlayerRole.OPERATIVE;
   const isCurrentPlayerTurn = currentPlayer?.team === currentTurn;
   const canGiveHint = isSpymaster && isCurrentPlayerTurn && !winner && !isAIPlayer(currentPlayer);
-  const canSelectCard = !isSpymaster && isCurrentPlayerTurn && !winner;
   const teamCounts = cards.length > 0 ? getTeamCounts(cards) : null;
   const latestHint = hints.length > 0 ? hints[0] : null;
+
+  // カード選択可能条件: オペレーティブ && 自チームのターン && 勝者なし && 今のターンのヒントが出ている
+  const hasHintForCurrentTurn = latestHint && latestHint.team === currentTurn;
+  const canSelectCard = isOperative && isCurrentPlayerTurn && !winner && hasHintForCurrentTurn && !aiGenerating;
+
+  // デバッグ用ログ
+  console.log('[GamePage] canSelectCard conditions:', {
+    isOperative,
+    isCurrentPlayerTurn,
+    winner: !!winner,
+    hasHintForCurrentTurn,
+    aiGenerating,
+    canSelectCard,
+    currentPlayer: currentPlayer?.nickname,
+    currentPlayerRole: currentPlayer?.role,
+    currentPlayerTeam: currentPlayer?.team,
+    currentTurn,
+  });
 
   if (loading) {
     return (
@@ -429,6 +447,17 @@ export default function GamePage() {
                 <button onClick={handlePassTurn} className="btn-secondary w-full text-lg py-3">
                   End Turn (Pass)
                 </button>
+              </div>
+            )}
+
+            {/* クリックできない理由を表示 */}
+            {!winner && isCurrentPlayerTurn && !canSelectCard && (
+              <div className="card bg-forest-primary/5 border-forest-primary/20">
+                <p className="text-sm text-forest-primary text-center">
+                  {!isOperative && '⚠️ オペレーティブになるとカードを選択できます'}
+                  {isOperative && !hasHintForCurrentTurn && '⏳ ヒントを待っています...'}
+                  {isOperative && hasHintForCurrentTurn && aiGenerating && '⏳ AIが処理中...'}
+                </p>
               </div>
             )}
 
