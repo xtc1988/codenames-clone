@@ -14,13 +14,29 @@ export default function SoloModePage() {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [defaultWordPack, setDefaultWordPack] = useState<WordPack | null>(null);
+  const [wordPackLoading, setWordPackLoading] = useState(true);
 
   // デフォルト単語パックを取得
   useEffect(() => {
     async function loadWordPacks() {
-      const packs = await getWordPacks();
-      const defaultPack = packs.find((p) => p.isDefault) || packs[0];
-      setDefaultWordPack(defaultPack || null);
+      setWordPackLoading(true);
+      try {
+        console.log('[SoloModePage] 単語パック取得開始');
+        const packs = await getWordPacks();
+        console.log('[SoloModePage] 取得結果:', packs.length, '件');
+        if (packs.length === 0) {
+          setError('単語パックが見つかりません。管理画面で単語パックを作成してください。');
+          return;
+        }
+        const defaultPack = packs.find((p) => p.isDefault) || packs[0];
+        console.log('[SoloModePage] 選択されたパック:', defaultPack?.name);
+        setDefaultWordPack(defaultPack || null);
+      } catch (err) {
+        console.error('[SoloModePage] 単語パック取得エラー:', err);
+        setError('単語パックの取得に失敗しました。');
+      } finally {
+        setWordPackLoading(false);
+      }
     }
     loadWordPacks();
   }, []);
@@ -73,8 +89,9 @@ export default function SoloModePage() {
       // ゲームページへ遷移
       navigate(`/room/${room.code}/game`);
     } catch (err) {
-      console.error('Solo mode error:', err);
-      setError('エラーが発生しました。もう一度お試しください。');
+      console.error('[SoloModePage] ゲーム開始エラー:', err);
+      const errorMessage = err instanceof Error ? err.message : 'エラーが発生しました';
+      setError(`ゲーム開始に失敗しました: ${errorMessage}`);
     } finally {
       setLoading(false);
       setStatus('');
@@ -123,10 +140,10 @@ export default function SoloModePage() {
 
             <button
               onClick={handleStartSoloGame}
-              disabled={loading || !nickname.trim()}
+              disabled={loading || !nickname.trim() || wordPackLoading || !defaultWordPack}
               className="btn-primary w-full text-lg py-3 disabled:opacity-50"
             >
-              {loading ? '準備中...' : 'ゲーム開始'}
+              {wordPackLoading ? '読み込み中...' : loading ? '準備中...' : 'ゲーム開始'}
             </button>
           </div>
 
